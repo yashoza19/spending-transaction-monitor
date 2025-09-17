@@ -146,8 +146,23 @@ class AlertMonitorService:
                 'authorization_code': transaction.authorization_code,
             }
 
+            alert_rule_dict = {
+                'id': rule.id,
+                'name': rule.name,
+                'description': rule.description,
+                'alert_type': str(rule.alert_type),
+                'amount_threshold': float(rule.amount_threshold)
+                if rule.amount_threshold
+                else None,
+                'merchant_category': rule.merchant_category,
+                'merchant_name': rule.merchant_name,
+                'location': rule.location,
+                'timeframe': rule.timeframe,
+                'recurring_interval_days': 35,
+            }
+
             sql_query = parse_alert_to_sql_with_context(
-                transaction_dict, rule.natural_language_query
+                transaction_dict, rule.natural_language_query, alert_rule_dict
             )
 
             # Store the generated SQL query for future use
@@ -173,13 +188,17 @@ class AlertMonitorService:
     def _should_trigger_alert(self, query_result: str) -> bool:
         """Determine if an alert should be triggered based on query result"""
         try:
-            # Check if query returned results and doesn't indicate error
-            return (
-                query_result
-                and not query_result.startswith('SQL Error')
-                and query_result != '[]'
-                and query_result.strip() != ''
-            )
+            # Check if query returned results and indicates an alert should be triggered
+            if (
+                not query_result
+                or query_result.startswith('SQL Error')
+                or query_result == '[]'
+                or query_result.strip() == ''
+            ):
+                return False
+
+            # Check if the result contains "ALERT" (not "NO_ALERT")
+            return 'ALERT' in query_result and 'NO_ALERT' not in query_result
         except Exception:
             return False
 

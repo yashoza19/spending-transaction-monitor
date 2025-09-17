@@ -1,15 +1,12 @@
 # agents/alert_parser.py
 
-from langchain.tools import tool
-
 from .utils import extract_sql, get_llm_client
 
 
 def build_prompt(last_transaction: dict, alert_text: str, alert_rule: dict) -> str:
     user_id = last_transaction.get('user_id', '').strip()
-    transaction_date = last_transaction.get('transaction_date', '')
-    merchant_name = alert_rule.get('merchant_name', '').lower()
-    merchant_category = alert_rule.get('merchant_category', '').lower()
+    merchant_name = (alert_rule.get('merchant_name') or '').lower()
+    merchant_category = (alert_rule.get('merchant_category') or '').lower()
     recurring_interval_days = alert_rule.get('recurring_interval_days', 35)
 
     schema = """
@@ -81,7 +78,7 @@ You must generate **PostgreSQL-compatible SQL** only.
      SELECT user_id, transaction_date, amount, merchant_name, merchant_category, trans_num
      FROM transactions
      WHERE user_id = '{user_id}'
-       AND transaction_date = TIMESTAMP '{transaction_date}'
+     ORDER BY transaction_date DESC
      LIMIT 1
    )
    ```
@@ -98,8 +95,8 @@ You must generate **PostgreSQL-compatible SQL** only.
             merchant_city, merchant_state, merchant_country, merchant_latitude, merchant_longitude, merchant_zipcode
       FROM transactions
       WHERE user_id = 'u-67890'
-        AND transaction_date = TIMESTAMP '2025-09-18 23:08:16.189193+00:00'
         AND LOWER(merchant_name) LIKE '%apple%'
+      ORDER BY transaction_date DESC
       LIMIT 1
     ) 
     ```
@@ -170,9 +167,9 @@ You must generate **PostgreSQL-compatible SQL** only.
      ```
 
 5. Time-window alerts:
-   - Anchor to last_transaction.transaction_date = '{transaction_date}'.
-   - Use BETWEEN (TIMESTAMP '{transaction_date}' - INTERVAL 'X') AND TIMESTAMP '{transaction_date}'.
-   - Always cast literals to TIMESTAMP before subtracting intervals.
+   - Use the most recent transaction from last_txn CTE as the anchor point.
+   - Use BETWEEN (lt.transaction_date - INTERVAL 'X') AND lt.transaction_date for time windows.
+   - Always reference lt.transaction_date from the CTE for time calculations.
 6. Recurring charge alerts:
    - If the user specifies an interval (e.g., "every 30 days", "every 90 days"):
      * Parse that interval (e.g., `interval_days = 30`).
@@ -246,13 +243,14 @@ Schema:
 
 Natural language alert: "{alert_text}"
 
+CRITICAL: DO NOT use exact timestamp matching. ALWAYS use ORDER BY transaction_date DESC LIMIT 1 to get the most recent transaction for the user.
+
 Generate a valid SQL query that evaluates the alert.
 SQL:
 """
     return prompt
 
 
-@tool
 def parse_alert_to_sql_with_context(
     transaction: dict, alert_text: str, alert_rule: dict
 ) -> str:
