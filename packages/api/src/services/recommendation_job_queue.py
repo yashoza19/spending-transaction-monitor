@@ -77,7 +77,9 @@ class RecommendationJobQueue:
         self._jobs[job_id] = job
         await self._queue.put(job)
 
-        logger.info(f'Enqueued single user recommendation job {job_id} for user {user_id}')
+        logger.info(
+            f'Enqueued single user recommendation job {job_id} for user {user_id}'
+        )
         return job_id
 
     async def enqueue_all_users_job(self) -> str:
@@ -127,7 +129,9 @@ class RecommendationJobQueue:
                 job.status = JobStatus.PROCESSING
                 self._jobs[job.job_id] = job
 
-                logger.info(f'Processing recommendation job {job.job_id} of type {job.job_type.value}')
+                logger.info(
+                    f'Processing recommendation job {job.job_id} of type {job.job_type.value}'
+                )
 
                 try:
                     # Process the job based on type
@@ -147,7 +151,9 @@ class RecommendationJobQueue:
                     job.result = result
                     self._jobs[job.job_id] = job
 
-                    logger.info(f'Completed recommendation job {job.job_id}: {result.get("status")}')
+                    logger.info(
+                        f'Completed recommendation job {job.job_id}: {result.get("status")}'
+                    )
 
                 except Exception as e:
                     # Update job with error
