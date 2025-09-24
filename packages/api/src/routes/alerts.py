@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db import get_db
 from db.models import AlertNotification, AlertRule, NotificationMethod, User
 from src.services import transaction_service
+from src.services.alert_recommendation_service import AlertRecommendationService
 from src.services.user_service import UserService
 
 from ..auth.middleware import require_authentication
@@ -50,10 +51,11 @@ class AlertRuleValidationResponse(BaseModel):
     validation_timestamp: str | None = None
 
 
-# Initialize alert rule service instance
+# Initialize service instances
 alert_rule_service = AlertRuleService()
 user_service = UserService()
 transaction_service = transaction_service.TransactionService()
+recommendation_service = AlertRecommendationService()
 
 
 # Alert Rules endpoints
@@ -615,3 +617,139 @@ async def trigger_alert_rule(
             'message': f'Alert trigger failed: {str(e)}',
             'error': str(e),
         }
+
+
+class AlertRecommendationResponse(BaseModel):
+    user_id: str
+    recommendation_type: str
+    recommendations: list[dict]
+    generated_at: str
+
+
+class RecommendationCategoriesResponse(BaseModel):
+    categories: dict[str, list[str]]
+
+
+# Alert Recommendations endpoints
+@router.get('/recommendations', response_model=AlertRecommendationResponse)
+async def get_alert_recommendations(
+    session: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(require_authentication),
+):
+    """Get personalized alert recommendations for the current user"""
+    try:
+        recommendations = await recommendation_service.get_recommendations(
+            current_user['id'], session
+        )
+
+        if 'error' in recommendations:
+            raise HTTPException(status_code=404, detail=recommendations['error'])
+
+        return AlertRecommendationResponse(**recommendations)
+
+    except Exception as e:
+        print(f'Error getting recommendations: {e}')
+        raise HTTPException(
+            status_code=500, detail=f'Failed to generate recommendations: {str(e)}'
+        ) from e
+
+
+@router.get(
+    '/recommendations/categories', response_model=RecommendationCategoriesResponse
+)
+async def get_recommendation_categories():
+    """Get available recommendation categories for UI purposes"""
+    try:
+        categories = await recommendation_service.get_recommendation_categories()
+        return RecommendationCategoriesResponse(categories=categories)
+    except Exception as e:
+        print(f'Error getting recommendation categories: {e}')
+        raise HTTPException(
+            status_code=500, detail=f'Failed to get recommendation categories: {str(e)}'
+        ) from e
+
+
+class RecommendationCreateRequest(BaseModel):
+    title: str
+    description: str
+    natural_language_query: str
+    category: str
+    priority: str
+    reasoning: str
+
+
+@router.post('/recommendations/create-rule')
+async def create_rule_from_recommendation(
+    recommendation: RecommendationCreateRequest,
+    session: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(require_authentication),
+):
+    """Create an alert rule from a specific recommendation"""
+    try:
+        natural_language_query = recommendation.natural_language_query
+
+        if not natural_language_query:
+            raise HTTPException(
+                status_code=400, detail='Recommendation does not contain a valid query'
+            )
+
+        # First validate the rule
+        validation_result = await alert_rule_service.validate_alert_rule(
+            natural_language_query, current_user['id'], session
+        )
+
+        if validation_result.get('status') not in ['valid', 'warning']:
+            raise HTTPException(
+                status_code=400,
+                detail=f'Rule validation failed: {validation_result.get("message")}',
+            )
+
+        # Create the alert rule using the validated data
+        alert_rule_data = validation_result.get('alert_rule', {})
+        sql_query = validation_result.get('sql_query', '')
+
+        # Create AlertRule object - use the recommendation title as the name
+        rule = AlertRule(
+            id=str(uuid.uuid4()),
+            user_id=current_user['id'],
+            name=recommendation.title,  # Always use recommendation title
+            description=recommendation.description
+            or alert_rule_data.get('description'),
+            is_active=True,
+            alert_type=alert_rule_data.get('alert_type'),
+            amount_threshold=alert_rule_data.get('amount_threshold'),
+            merchant_category=alert_rule_data.get('merchant_category'),
+            merchant_name=alert_rule_data.get('merchant_name'),
+            location=alert_rule_data.get('location'),
+            timeframe=alert_rule_data.get('timeframe'),
+            natural_language_query=natural_language_query,
+            sql_query=sql_query,
+            notification_methods=None,
+        )
+
+        session.add(rule)
+        await session.commit()
+        await session.refresh(rule)
+
+        return {
+            'message': 'Alert rule created successfully from recommendation',
+            'rule_id': rule.id,
+            'rule_name': rule.name,
+            'recommendation_used': {
+                'title': recommendation.title,
+                'description': recommendation.description,
+                'natural_language_query': recommendation.natural_language_query,
+                'category': recommendation.category,
+                'priority': recommendation.priority,
+                'reasoning': recommendation.reasoning,
+            },
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f'Error creating rule from recommendation: {e}')
+        raise HTTPException(
+            status_code=500,
+            detail=f'Failed to create rule from recommendation: {str(e)}',
+        ) from e
