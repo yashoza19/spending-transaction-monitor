@@ -9,6 +9,7 @@ import {
   type ValidationResult,
 } from '../components/alert-rule-validation/alert-rule-validation';
 import { AlertRuleCard } from '../components/alert-rule-card/alert-rule-card';
+import { AlertRecommendations } from '../components/alert-recommendations/alert-recommendations';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { LocationPermissionAlert } from '../components/location/LocationPermissionAlert';
 import {
@@ -27,6 +28,8 @@ import {
   useDeleteAlertRule,
   useValidateAlertRule,
 } from '../hooks/alert';
+} from '../hooks/alert';
+import { useAlertRecommendations, useCreateRuleFromRecommendation } from '../hooks/transactions';
 import { cn } from '../lib/utils';
 import { statusColors } from '../lib/colors';
 import type { CreateAlertRuleInput } from '../schemas/alert-rule';
@@ -41,7 +44,10 @@ export const Route = createFileRoute('/alerts')({
 
 function AlertsPage() {
   const { data: rules, isLoading } = useAlertRules();
+  const { data: recommendations, isLoading: isLoadingRecommendations } =
+    useAlertRecommendations();
   const createRuleFromValidation = useCreateAlertRuleFromValidation();
+  const createRuleFromRecommendation = useCreateRuleFromRecommendation();
   const validateRule = useValidateAlertRule();
   const toggleRule = useToggleAlertRule();
   const deleteRule = useDeleteAlertRule();
@@ -135,6 +141,27 @@ function AlertsPage() {
     });
   };
 
+  const handleCreateRuleFromRecommendation = async (recommendation: {
+    title: string;
+    description: string;
+    natural_language_query: string;
+    category: string;
+    priority: 'high' | 'medium' | 'low';
+    reasoning: string;
+  }) => {
+    try {
+      setCreateError(null);
+      await createRuleFromRecommendation.mutateAsync(recommendation);
+    } catch (error) {
+      console.error('Failed to create rule from recommendation:', error);
+      setCreateError({
+        rule: recommendation.title,
+        message:
+          'Failed to create the alert rule from recommendation. Please try again.',
+      });
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="text-center mt-4 mb-8">
@@ -151,6 +178,13 @@ function AlertsPage() {
           isSubmitting={validateRule.isPending}
         />
       </div>
+
+      {/* Alert Recommendations */}
+      <AlertRecommendations
+        recommendations={recommendations || null}
+        isLoading={isLoadingRecommendations}
+        onCreateRule={handleCreateRuleFromRecommendation}
+      />
 
       {/* Validation Result Display */}
       {validationResult && (
