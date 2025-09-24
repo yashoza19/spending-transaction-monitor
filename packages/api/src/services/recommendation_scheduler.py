@@ -35,6 +35,7 @@ class RecommendationScheduler:
             if self._scheduler_task:
                 self._scheduler_task.cancel()
                 import contextlib
+
                 with contextlib.suppress(asyncio.CancelledError):
                     await self._scheduler_task
             logger.info('Recommendation scheduler stopped')
