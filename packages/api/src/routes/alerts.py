@@ -13,7 +13,9 @@ from db import get_db
 from db.models import AlertNotification, AlertRule, NotificationMethod, User
 from src.services import transaction_service
 from src.services.alert_recommendation_service import AlertRecommendationService
-from src.services.background_recommendation_service import background_recommendation_service
+from src.services.background_recommendation_service import (
+    background_recommendation_service,
+)
 from src.services.recommendation_job_queue import recommendation_job_queue
 from src.services.user_service import UserService
 
@@ -637,7 +639,9 @@ class RecommendationCategoriesResponse(BaseModel):
 # Alert Recommendations endpoints
 @router.get('/recommendations', response_model=AlertRecommendationResponse)
 async def get_alert_recommendations(
-    force_refresh: bool = Query(False, description='Force regeneration of recommendations'),
+    force_refresh: bool = Query(
+        False, description='Force regeneration of recommendations'
+    ),
     session: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_authentication),
 ):
@@ -647,8 +651,10 @@ async def get_alert_recommendations(
 
         # First, try to get cached recommendations unless force refresh is requested
         if not force_refresh:
-            cached_recommendations = await background_recommendation_service.get_cached_recommendations(
-                user_id, session
+            cached_recommendations = (
+                await background_recommendation_service.get_cached_recommendations(
+                    user_id, session
+                )
             )
             if cached_recommendations:
                 return AlertRecommendationResponse(**cached_recommendations)
@@ -656,7 +662,9 @@ async def get_alert_recommendations(
         # If no cached recommendations or force refresh, check if we should generate in background
         if force_refresh:
             # For force refresh, generate immediately
-            recommendations = await recommendation_service.get_recommendations(user_id, session)
+            recommendations = await recommendation_service.get_recommendations(
+                user_id, session
+            )
 
             if 'error' in recommendations:
                 raise HTTPException(status_code=404, detail=recommendations['error'])
@@ -669,11 +677,13 @@ async def get_alert_recommendations(
             return AlertRecommendationResponse(**recommendations)
         else:
             # No cached recommendations found, enqueue background job and return message
-            job_id = await recommendation_job_queue.enqueue_single_user_job(user_id)
+            await recommendation_job_queue.enqueue_single_user_job(user_id)
 
             # For now, generate synchronously as fallback
             # In production, you might want to return a different response indicating processing
-            recommendations = await recommendation_service.get_recommendations(user_id, session)
+            recommendations = await recommendation_service.get_recommendations(
+                user_id, session
+            )
 
             if 'error' in recommendations:
                 raise HTTPException(status_code=404, detail=recommendations['error'])
@@ -818,14 +828,14 @@ async def generate_recommendations_for_all_users(
 
         return BulkRecommendationResponse(
             status='enqueued',
-            message=f'Bulk recommendation generation job {job_id} has been enqueued'
+            message=f'Bulk recommendation generation job {job_id} has been enqueued',
         )
 
     except Exception as e:
         logger.error(f'Error enqueueing bulk recommendation job: {e}')
         raise HTTPException(
             status_code=500,
-            detail=f'Failed to enqueue bulk recommendation job: {str(e)}'
+            detail=f'Failed to enqueue bulk recommendation job: {str(e)}',
         ) from e
 
 
@@ -843,16 +853,13 @@ async def cleanup_expired_recommendations(
         job_id = await recommendation_job_queue.enqueue_cleanup_job()
 
         return BackgroundJobResponse(
-            job_id=job_id,
-            status='enqueued',
-            message='Cleanup job has been enqueued'
+            job_id=job_id, status='enqueued', message='Cleanup job has been enqueued'
         )
 
     except Exception as e:
         logger.error(f'Error enqueueing cleanup job: {e}')
         raise HTTPException(
-            status_code=500,
-            detail=f'Failed to enqueue cleanup job: {str(e)}'
+            status_code=500, detail=f'Failed to enqueue cleanup job: {str(e)}'
         ) from e
 
 

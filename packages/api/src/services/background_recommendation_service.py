@@ -1,11 +1,11 @@
 """Background Recommendation Service - Pre-generate and cache alert recommendations"""
 
 import asyncio
+from datetime import UTC, datetime, timedelta
 import json
 import logging
-import uuid
-from datetime import UTC, datetime, timedelta
 from typing import Any
+import uuid
 
 from sqlalchemy import and_, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -51,13 +51,17 @@ class BackgroundRecommendationService:
             )
 
             if 'error' in recommendations:
-                logger.error(f'Failed to generate recommendations for user {user_id}: {recommendations["error"]}')
+                logger.error(
+                    f'Failed to generate recommendations for user {user_id}: {recommendations["error"]}'
+                )
                 return {'status': 'error', 'message': recommendations['error']}
 
             # Cache the recommendations
             await self._cache_recommendations(user_id, recommendations, session)
 
-            logger.info(f'Successfully generated and cached recommendations for user {user_id}')
+            logger.info(
+                f'Successfully generated and cached recommendations for user {user_id}'
+            )
             return {
                 'status': 'success',
                 'user_id': user_id,
@@ -67,7 +71,10 @@ class BackgroundRecommendationService:
             }
 
         except Exception as e:
-            logger.error(f'Error generating recommendations for user {user_id}: {str(e)}', exc_info=True)
+            logger.error(
+                f'Error generating recommendations for user {user_id}: {str(e)}',
+                exc_info=True,
+            )
             return {
                 'status': 'error',
                 'message': f'Failed to generate recommendations: {str(e)}',
@@ -88,7 +95,7 @@ class BackgroundRecommendationService:
                 .where(
                     and_(
                         CachedRecommendation.user_id == user_id,
-                        CachedRecommendation.expires_at > datetime.now(UTC)
+                        CachedRecommendation.expires_at > datetime.now(UTC),
                     )
                 )
                 .order_by(CachedRecommendation.generated_at.desc())
@@ -111,7 +118,9 @@ class BackgroundRecommendationService:
             }
 
         except Exception as e:
-            logger.error(f'Error retrieving cached recommendations for user {user_id}: {str(e)}')
+            logger.error(
+                f'Error retrieving cached recommendations for user {user_id}: {str(e)}'
+            )
             return None
 
     async def _cache_recommendations(
@@ -133,10 +142,12 @@ class BackgroundRecommendationService:
             cached_recommendation = CachedRecommendation(
                 id=str(uuid.uuid4()),
                 user_id=user_id,
-                recommendation_type=recommendations.get('recommendation_type', 'unknown'),
-                recommendations_json=json.dumps({
-                    'recommendations': recommendations.get('recommendations', [])
-                }),
+                recommendation_type=recommendations.get(
+                    'recommendation_type', 'unknown'
+                ),
+                recommendations_json=json.dumps(
+                    {'recommendations': recommendations.get('recommendations', [])}
+                ),
                 expires_at=expires_at,
             )
 
@@ -158,9 +169,7 @@ class BackgroundRecommendationService:
 
         try:
             # Get all active users
-            result = await session.execute(
-                select(User).where(User.is_active == True)
-            )
+            result = await session.execute(select(User).where(User.is_active))
             users = result.scalars().all()
 
             total_users = len(users)
@@ -168,15 +177,16 @@ class BackgroundRecommendationService:
             error_count = 0
             results = []
 
-            logger.info(f'Starting bulk recommendation generation for {total_users} users')
+            logger.info(
+                f'Starting bulk recommendation generation for {total_users} users'
+            )
 
             for user in users:
                 try:
-                    result = await self.generate_recommendations_for_user(user.id, session)
-                    results.append({
-                        'user_id': user.id,
-                        'result': result
-                    })
+                    result = await self.generate_recommendations_for_user(
+                        user.id, session
+                    )
+                    results.append({'user_id': user.id, 'result': result})
 
                     if result.get('status') == 'success':
                         success_count += 1
@@ -184,12 +194,16 @@ class BackgroundRecommendationService:
                         error_count += 1
 
                 except Exception as e:
-                    logger.error(f'Error generating recommendations for user {user.id}: {str(e)}')
+                    logger.error(
+                        f'Error generating recommendations for user {user.id}: {str(e)}'
+                    )
                     error_count += 1
-                    results.append({
-                        'user_id': user.id,
-                        'result': {'status': 'error', 'message': str(e)}
-                    })
+                    results.append(
+                        {
+                            'user_id': user.id,
+                            'result': {'status': 'error', 'message': str(e)},
+                        }
+                    )
 
             return {
                 'status': 'completed',
@@ -201,7 +215,9 @@ class BackgroundRecommendationService:
             }
 
         except Exception as e:
-            logger.error(f'Error in bulk recommendation generation: {str(e)}', exc_info=True)
+            logger.error(
+                f'Error in bulk recommendation generation: {str(e)}', exc_info=True
+            )
             return {
                 'status': 'error',
                 'message': f'Bulk generation failed: {str(e)}',
@@ -256,7 +272,9 @@ class BackgroundRecommendationService:
                 result = asyncio.run(self.generate_recommendations_for_all_users())
                 logger.info(f'Background recommendation generation completed: {result}')
             except Exception as e:
-                logger.error(f'Background recommendation generation failed: {e}', exc_info=True)
+                logger.error(
+                    f'Background recommendation generation failed: {e}', exc_info=True
+                )
 
         threading.Thread(target=runner, daemon=True).start()
 
@@ -272,7 +290,9 @@ class BackgroundRecommendationService:
                 result = asyncio.run(self.clean_expired_recommendations())
                 logger.info(f'Background recommendation cleanup completed: {result}')
             except Exception as e:
-                logger.error(f'Background recommendation cleanup failed: {e}', exc_info=True)
+                logger.error(
+                    f'Background recommendation cleanup failed: {e}', exc_info=True
+                )
 
         threading.Thread(target=runner, daemon=True).start()
 

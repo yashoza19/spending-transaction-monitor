@@ -1,8 +1,8 @@
 """Scheduler for periodic recommendation generation"""
 
 import asyncio
+from datetime import UTC, datetime, time
 import logging
-from datetime import UTC, datetime, time, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -34,10 +34,9 @@ class RecommendationScheduler:
             self._is_running = False
             if self._scheduler_task:
                 self._scheduler_task.cancel()
-                try:
+                import contextlib
+                with contextlib.suppress(asyncio.CancelledError):
                     await self._scheduler_task
-                except asyncio.CancelledError:
-                    pass
             logger.info('Recommendation scheduler stopped')
 
     async def _scheduler_loop(self):
@@ -53,9 +52,13 @@ class RecommendationScheduler:
                     logger.info('Scheduling daily recommendation generation')
                     try:
                         job_id = await recommendation_job_queue.enqueue_all_users_job()
-                        logger.info(f'Enqueued daily recommendation generation job: {job_id}')
+                        logger.info(
+                            f'Enqueued daily recommendation generation job: {job_id}'
+                        )
                     except Exception as e:
-                        logger.error(f'Failed to enqueue daily recommendation generation: {e}')
+                        logger.error(
+                            f'Failed to enqueue daily recommendation generation: {e}'
+                        )
 
                 # Check if it's time for weekly cleanup
                 if await self._should_run_cleanup(now):
@@ -84,7 +87,7 @@ class RecommendationScheduler:
             hour=self.generation_time.hour,
             minute=self.generation_time.minute,
             second=0,
-            microsecond=0
+            microsecond=0,
         )
 
         # Check if we're within the execution window (±30 minutes)
@@ -107,7 +110,7 @@ class RecommendationScheduler:
             hour=self.cleanup_time.hour,
             minute=self.cleanup_time.minute,
             second=0,
-            microsecond=0
+            microsecond=0,
         )
 
         # Check if we're within the execution window (±30 minutes)
