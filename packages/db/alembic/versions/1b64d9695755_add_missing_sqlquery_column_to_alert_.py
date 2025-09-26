@@ -1,7 +1,7 @@
 """add missing sqlQuery column to alert_rules
 
 Revision ID: 1b64d9695755
-Revises: e35d4db01ac2
+Revises: ac92703bd365
 Create Date: 2025-08-27 16:41:43.009978
 
 """
@@ -12,7 +12,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '1b64d9695755'
-down_revision = 'e35d4db01ac2'
+down_revision = 'ac92703bd365'
 branch_labels = None
 depends_on = None
 

@@ -19,7 +19,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # API Configuration
-API_BASE_URL="http://localhost:8000"
+API_BASE_URL="http://localhost:8000/api"
 JSON_DIR="json"
 
 # Counter variables
@@ -94,8 +94,8 @@ echo "============================================"
 
 # Check if API server is running
 echo -e "${YELLOW}📡 Checking API server availability...${NC}"
-if ! curl -s "${API_BASE_URL}/health" > /dev/null; then
-    echo -e "${RED}❌ API server is not running at ${API_BASE_URL}${NC}"
+if ! curl -s "http://localhost:8000/health/" > /dev/null; then
+    echo -e "${RED}❌ API server is not running at http://localhost:8000${NC}"
     echo -e "${YELLOW}💡 Please start the API server first:${NC}"
     echo "   cd packages/api && npm run dev"
     exit 1
