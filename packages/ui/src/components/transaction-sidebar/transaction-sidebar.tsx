@@ -3,7 +3,7 @@ import { Button } from '../atoms/button/button';
 import { statusColors } from '../../lib/colors';
 import { cn } from '../../lib/utils';
 import { getCategoryIcon } from '../../lib/category-icons';
-import { Copy, Flag, ExternalLink, X, Calendar, CreditCard } from 'lucide-react';
+import { Copy, X, Calendar, CreditCard } from 'lucide-react';
 import type { Transaction } from '../../schemas/transaction';
 
 export interface TransactionSidebarProps {

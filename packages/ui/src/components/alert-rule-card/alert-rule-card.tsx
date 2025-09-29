@@ -22,7 +22,7 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react';
-import type { AlertRule, AlertTriggerHistory } from '../../schemas/transaction';
+import type { AlertRule } from '../../schemas/transaction';
 
 export interface AlertRuleCardProps {
   rule: AlertRule;

@@ -42,4 +42,3 @@ export function formatTime(time: string): string {
 export function getStatusColor(status: Transaction['status']): string {
   return statusColors[status]?.badge || '';
 }
-

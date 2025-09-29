@@ -108,14 +108,14 @@ export const CreateTransactionSchema = z.object({
     .string()
     .min(1, 'Category is required')
     .refine(
-      (val) => TRANSACTION_CATEGORIES.includes(val as any),
+      (val) => TRANSACTION_CATEGORIES.includes(val as (typeof TRANSACTION_CATEGORIES)[number]),
       'Please select a valid category',
     ),
   account: z
     .string()
     .min(1, 'Account is required')
     .refine(
-      (val) => ACCOUNT_TYPES.includes(val as any),
+      (val) => ACCOUNT_TYPES.includes(val as (typeof ACCOUNT_TYPES)[number]),
       'Please select a valid account type',
     ),
   type: z.enum(['debit', 'credit']),

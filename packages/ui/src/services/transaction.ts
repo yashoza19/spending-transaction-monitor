@@ -3,6 +3,8 @@ import {
   Transaction,
   TransactionStats,
   ApiTransactionResponse,
+  TRANSACTION_TYPES,
+  TRANSACTION_STATUSES,
 } from '../schemas/transaction';
 import { apiClient } from './apiClient';
 
@@ -51,8 +53,8 @@ export class TransactionService {
         merchant_name: tx.merchant_name,
         merchant_category: tx.merchant_category,
         transaction_date: tx.transaction_date,
-        transaction_type: tx.transaction_type as any, // Cast to match enum
-        status: tx.status as any, // Cast to match enum
+        transaction_type: tx.transaction_type as (typeof TRANSACTION_TYPES)[number],
+        status: tx.status as (typeof TRANSACTION_STATUSES)[number],
         merchant_city: undefined,
         merchant_state: undefined,
         merchant_country: undefined,
@@ -108,8 +110,8 @@ export class TransactionService {
       merchant_name: tx.merchant_name,
       merchant_category: tx.merchant_category,
       transaction_date: tx.transaction_date,
-      transaction_type: tx.transaction_type as any, // Cast to match enum
-      status: tx.status as any, // Cast to match enum
+      transaction_type: tx.transaction_type as (typeof TRANSACTION_TYPES)[number],
+      status: tx.status as (typeof TRANSACTION_STATUSES)[number],
       merchant_city: undefined,
       merchant_state: undefined,
       merchant_country: undefined,
@@ -237,7 +239,7 @@ export class TransactionService {
   ): Promise<Transaction> {
     // Transform form data to backend API format
     const backendPayload = {
-      id: crypto.randomUUID(), // Generate client-side ID
+      id: globalThis.crypto.randomUUID(), // Generate client-side ID
       user_id: userId,
       credit_card_num: 'demo-card-1234', // Default demo card
       amount: formData.amount,

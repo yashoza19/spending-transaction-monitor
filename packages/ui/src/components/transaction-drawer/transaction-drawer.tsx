@@ -9,7 +9,7 @@ import {
 import { statusColors } from '../../lib/colors';
 import { cn } from '../../lib/utils';
 import { getCategoryIcon } from '../../lib/category-icons';
-import { Copy, Flag, ExternalLink, Calendar, CreditCard } from 'lucide-react';
+import { Copy, Calendar, CreditCard } from 'lucide-react';
 import type { Transaction } from '../../schemas/transaction';
 
 export interface TransactionDrawerProps {

@@ -33,7 +33,7 @@ export const useCreateAlertRuleFromValidation = () => {
 
   return useMutation({
     mutationFn: (validationResult: {
-      alert_rule: any; // Using any since this comes from API validation
+      alert_rule: Record<string, unknown>; // API validation result object
       sql_query: string;
       natural_language_query: string;
     }) => AlertService.createAlertRuleFromValidation(validationResult),
