@@ -108,7 +108,8 @@ export const CreateTransactionSchema = z.object({
     .string()
     .min(1, 'Category is required')
     .refine(
-      (val) => TRANSACTION_CATEGORIES.includes(val as (typeof TRANSACTION_CATEGORIES)[number]),
+      (val) =>
+        TRANSACTION_CATEGORIES.includes(val as (typeof TRANSACTION_CATEGORIES)[number]),
       'Please select a valid category',
     ),
   account: z
