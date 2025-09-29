@@ -2,6 +2,7 @@ import { Badge } from '../atoms/badge/badge';
 import { Button } from '../atoms/button/button';
 import { statusColors } from '../../lib/colors';
 import { cn } from '../../lib/utils';
+import { getCategoryIcon } from '../../lib/category-icons';
 import { Copy, Flag, ExternalLink, X, Calendar, CreditCard } from 'lucide-react';
 import type { Transaction } from '../../schemas/transaction';
 
@@ -50,38 +51,6 @@ export function TransactionSidebar({
     console.log('Transaction ID copied');
   };
 
-  const getCategoryIcon = (category?: string) => {
-    if (!category) return '💰';
-
-    const lowerCategory = category.toLowerCase();
-
-    if (lowerCategory.includes('cloud') || lowerCategory.includes('software'))
-      return '☁️';
-    if (lowerCategory.includes('food') || lowerCategory.includes('dining')) return '🍽️';
-    if (
-      lowerCategory.includes('transport') ||
-      lowerCategory.includes('uber') ||
-      lowerCategory.includes('taxi')
-    )
-      return '🚗';
-    if (lowerCategory.includes('business') || lowerCategory.includes('office'))
-      return '🏢';
-    if (lowerCategory.includes('transfer') || lowerCategory.includes('bank'))
-      return '🏦';
-    if (lowerCategory.includes('shopping') || lowerCategory.includes('retail'))
-      return '🛒';
-    if (lowerCategory.includes('entertainment') || lowerCategory.includes('streaming'))
-      return '🎬';
-    if (lowerCategory.includes('health') || lowerCategory.includes('medical'))
-      return '🏥';
-    if (lowerCategory.includes('education') || lowerCategory.includes('learning'))
-      return '📚';
-    if (lowerCategory.includes('travel') || lowerCategory.includes('hotel'))
-      return '✈️';
-
-    return '💰'; // Default fallback
-  };
-
   return (
     <div
       className={cn(
@@ -96,7 +65,7 @@ export function TransactionSidebar({
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Calendar className="h-4 w-4" />
               <span>
-                {new Date(transaction.time).toLocaleDateString('en-US', {
+                {new Date(transaction.transaction_date).toLocaleDateString('en-US', {
                   weekday: 'long',
                   month: 'short',
                   day: 'numeric',
@@ -107,7 +76,12 @@ export function TransactionSidebar({
             <div className="flex items-center gap-2">
               <Badge
                 variant="secondary"
-                className={cn('capitalize', statusColors[transaction.status]?.badge)}
+                className={cn(
+                  'capitalize',
+                  statusColors[
+                    transaction.status.toLowerCase() as keyof typeof statusColors
+                  ]?.badge,
+                )}
               >
                 {transaction.status}
               </Badge>
@@ -123,12 +97,11 @@ export function TransactionSidebar({
               )}
             </div>
           </div>
-
           {/* Main Info */}
           <div className="space-y-4">
             <div className="flex items-start justify-between">
               <h2 className="text-2xl font-bold text-foreground leading-tight">
-                {transaction.merchant}
+                {transaction.merchant_name}
               </h2>
               <p className="text-2xl font-bold text-foreground">
                 {formatCurrency(transaction.amount)}
@@ -142,9 +115,11 @@ export function TransactionSidebar({
                   Category
                 </p>
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-info-muted text-info-muted-foreground rounded-full">
-                  <div className="text-sm">{getCategoryIcon(transaction.category)}</div>
+                  <div className="text-sm">
+                    {getCategoryIcon(transaction.merchant_category)}
+                  </div>
                   <span className="text-sm font-medium uppercase tracking-wide">
-                    {transaction.category || transaction.type}
+                    {transaction.merchant_category || transaction.transaction_type}
                   </span>
                 </div>
               </div>
@@ -170,7 +145,7 @@ export function TransactionSidebar({
                   Time
                 </p>
                 <p className="text-sm font-medium text-foreground">
-                  {new Date(transaction.time).toLocaleTimeString('en-US', {
+                  {new Date(transaction.transaction_date).toLocaleTimeString('en-US', {
                     hour: 'numeric',
                     minute: '2-digit',
                     hour12: true,
@@ -197,7 +172,6 @@ export function TransactionSidebar({
               </div>
             </div>
           </div>
-
           {/* Description */}
           {transaction.description && (
             <div className="p-4 bg-muted/30 rounded-lg">
@@ -206,20 +180,6 @@ export function TransactionSidebar({
               </p>
             </div>
           )}
-
-          {/* Actions */}
-          <div className="space-y-2 pt-4 border-t border-border">
-            {transaction.status === 'flagged' && (
-              <Button variant="outline" size="sm" className="w-full">
-                <Flag className="h-4 w-4 mr-2" />
-                Unflag Transaction
-              </Button>
-            )}
-            <Button variant="outline" size="sm" className="w-full">
-              <ExternalLink className="h-4 w-4 mr-2" />
-              View in System
-            </Button>
-          </div>
         </div>
       </div>
     </div>

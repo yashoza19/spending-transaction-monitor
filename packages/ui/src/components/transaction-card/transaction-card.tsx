@@ -1,11 +1,6 @@
 import { Badge } from '../atoms/badge/badge';
-import {
-  cn,
-  formatAmount,
-  formatTime,
-  getStatusColor,
-  getCategoryIcon,
-} from '../../lib/utils';
+import { cn, formatAmount, formatTime, getStatusColor } from '../../lib/utils';
+import { getCategoryIcon } from '../../lib/category-icons';
 import type { Transaction } from '../../schemas/transaction';
 
 export interface TransactionCardProps {
@@ -41,15 +36,15 @@ export function TransactionCard({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <div className="text-xl flex-shrink-0">
-              {getCategoryIcon(transaction.category)}
+              {getCategoryIcon(transaction.merchant_category)}
             </div>
             <div className="min-w-0 flex-1">
               <p className="font-medium text-foreground truncate">
-                {transaction.merchant}
+                {transaction.merchant_name}
               </p>
-              {transaction.category && (
-                <p className="text-xs text-muted-foreground truncate mt-0.5">
-                  {transaction.category}
+              {transaction.merchant_category && (
+                <p className="text-xs text-muted-foreground uppercase truncate mt-0.5">
+                  {transaction.merchant_category}
                 </p>
               )}
             </div>
@@ -70,7 +65,9 @@ export function TransactionCard({
           <div className="flex items-center gap-1 text-xs text-muted-foreground min-w-0">
             <span className="truncate">{transaction.id}</span>
             <span>•</span>
-            <span className="flex-shrink-0">{formatTime(transaction.time)}</span>
+            <span className="flex-shrink-0">
+              {formatTime(transaction.transaction_date)}
+            </span>
           </div>
         </div>
       </div>
@@ -79,14 +76,14 @@ export function TransactionCard({
       <div className="hidden sm:flex items-center justify-between">
         <div className="flex items-center gap-4 min-w-0 flex-1">
           <div className="text-2xl flex-shrink-0">
-            {getCategoryIcon(transaction.category)}
+            {getCategoryIcon(transaction.merchant_category)}
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <p className="font-medium text-foreground">{transaction.merchant}</p>
-              {transaction.category && (
-                <span className="text-xs text-muted-foreground">
-                  • {transaction.category}
+              <p className="font-medium text-foreground">{transaction.merchant_name}</p>
+              {transaction.merchant_category && (
+                <span className="text-xs text-muted-foreground uppercase">
+                  • {transaction.merchant_category}
                 </span>
               )}
             </div>
@@ -94,7 +91,7 @@ export function TransactionCard({
               <span className="text-sm text-muted-foreground">{transaction.id}</span>
               <span className="text-sm text-muted-foreground">•</span>
               <span className="text-sm text-muted-foreground">
-                {formatTime(transaction.time)}
+                {formatTime(transaction.transaction_date)}
               </span>
             </div>
           </div>

@@ -43,37 +43,3 @@ export function getStatusColor(status: Transaction['status']): string {
   return statusColors[status]?.badge || '';
 }
 
-/**
- * Returns an emoji icon based on the transaction category
- */
-export function getCategoryIcon(category?: string): string {
-  if (!category) return '💰';
-
-  const lowerCategory = category.toLowerCase();
-
-  if (lowerCategory.includes('cloud') || lowerCategory.includes('software'))
-    return '☁️';
-  if (lowerCategory.includes('food') || lowerCategory.includes('dining')) return '🍽️';
-  if (
-    lowerCategory.includes('transport') ||
-    lowerCategory.includes('uber') ||
-    lowerCategory.includes('taxi')
-  )
-    return '🚗';
-  if (lowerCategory.includes('business') || lowerCategory.includes('office'))
-    return '🏢';
-  if (lowerCategory.includes('transfer') || lowerCategory.includes('bank'))
-    return '🏦';
-  if (lowerCategory.includes('shopping') || lowerCategory.includes('retail'))
-    return '🛒';
-  if (lowerCategory.includes('entertainment') || lowerCategory.includes('streaming'))
-    return '🎬';
-  if (lowerCategory.includes('health') || lowerCategory.includes('medical'))
-    return '🏥';
-  if (lowerCategory.includes('education') || lowerCategory.includes('learning'))
-    return '📚';
-  if (lowerCategory.includes('travel') || lowerCategory.includes('hotel'))
-    return '✈️';
-
-  return '💰'; // Default fallback
-}

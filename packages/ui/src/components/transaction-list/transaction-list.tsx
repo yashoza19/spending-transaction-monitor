@@ -64,13 +64,15 @@ export function TransactionList({
 
             switch (sortBy) {
               case 'date':
-                comparison = new Date(a.time).getTime() - new Date(b.time).getTime();
+                comparison =
+                  new Date(a.transaction_date).getTime() -
+                  new Date(b.transaction_date).getTime();
                 break;
               case 'amount':
                 comparison = a.amount - b.amount;
                 break;
               case 'merchant':
-                comparison = a.merchant.localeCompare(b.merchant);
+                comparison = a.merchant_name.localeCompare(b.merchant_name);
                 break;
             }
 
