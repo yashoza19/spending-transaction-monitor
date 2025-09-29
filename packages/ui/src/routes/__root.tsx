@@ -3,7 +3,7 @@ import { TanStackRouterDevtools } from '@tanstack/router-devtools';
 import { DashboardHeader } from '../components/dashboard-header/dashboard-header';
 import { Footer } from '../components/footer/footer';
 import { DevModeBanner } from '../components/dev-mode/DevModeBanner';
-
+import { Toaster } from '../components/atoms/sonner/sonner';
 function RootComponent() {
   return (
     <div className="min-h-screen flex flex-col">
@@ -16,6 +16,7 @@ function RootComponent() {
         <Outlet />
       </main>
       <Footer />
+      <Toaster />
       <TanStackRouterDevtools />
     </div>
   );
