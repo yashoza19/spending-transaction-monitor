@@ -135,7 +135,8 @@ class TestLocationMiddleware:
 
         # Mock database User model
         self.mock_user_query = Mock()
-        self.mock_session.execute = AsyncMock(return_value=self.mock_user_query)
+        self.mock_session.execute = AsyncMock()
+        self.mock_session.execute.return_value = self.mock_user_query
         self.mock_session.commit = AsyncMock()
         self.mock_session.rollback = AsyncMock()
 
