@@ -60,7 +60,7 @@ export function TransactionDrawer({
               </div>
               <Badge
                 variant="secondary"
-                className={cn('capitalize', statusColors[transaction.status]?.badge)}
+                className={cn('capitalize', statusColors[transaction.status.toLowerCase() as keyof typeof statusColors]?.badge)}
               >
                 {transaction.status}
               </Badge>

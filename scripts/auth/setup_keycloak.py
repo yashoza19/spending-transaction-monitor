@@ -377,7 +377,9 @@ class KeycloakRealmCreator:
         self.log("📋 Test users created:")
         self.log("   • testuser@example.com / password123 (user role)")
         self.log("   • admin@example.com / admin123 (admin role)")
-        self.log("   • john.doe@example.com / johnpassword (user role, has transaction data)")
+        self.log(
+            "   • john.doe@example.com / johnpassword (user role, has transaction data)"
+        )
         self.log("🔗 Next steps:")
         self.log("   1. Update API config to use realm: spending-monitor")
         self.log("   2. Test the UI: http://localhost:3000/")
