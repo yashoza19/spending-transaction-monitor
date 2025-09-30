@@ -13,25 +13,31 @@ def get_env_file_path() -> str:
     """
     Determine which .env file to use.
     Priority:
-    1. ../../../../.env (root directory) - preferred
-    2. ../../.env (packages/api directory) - fallback
+    1. ../../../../.env (root directory) - fallback
+    2. ../../../../.env.development (root directory) - preferred for development
+    3. ../../.env (packages/api directory) - last resort
     """
     # Get the directory where this config file is located (packages/api/src/core/)
     current_dir = Path(__file__).parent
 
-    # Check root directory first
+    # Check root directory .env
     # packages/api/src/core/ -> packages/api/src/ -> packages/api/ -> packages/ -> root/
     root_env = current_dir.parent.parent.parent.parent / '.env'
     if root_env.exists():
         return str(root_env)
+
+    # Check for .env.development first (preferred for development)
+    root_env_dev = current_dir.parent.parent.parent.parent / '.env.development'
+    if root_env_dev.exists():
+        return str(root_env_dev)
 
     # Fallback to packages/api/.env
     api_env = current_dir.parent.parent / '.env'
     if api_env.exists():
         return str(api_env)
 
-    # Default to root directory path (even if it doesn't exist yet)
-    return str(root_env)
+    # Default to .env.development path (even if it doesn't exist yet)
+    return str(root_env_dev)
 
 
 class Settings(BaseSettings):

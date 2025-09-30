@@ -1,141 +1,173 @@
-"""Scheduler for periodic recommendation generation"""
+"""Recommendation Scheduler - Pre-generate recommendations for active users"""
 
 import asyncio
-from datetime import UTC, datetime, time
+from datetime import UTC, datetime, timedelta
 import logging
+from typing import Any
+
+from sqlalchemy import and_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from db.database import SessionLocal
+from db.models import CachedRecommendation, User
+
+from .background_recommendation_service import background_recommendation_service
 
 logger = logging.getLogger(__name__)
 
 
 class RecommendationScheduler:
-    """Schedules periodic recommendation generation and cleanup tasks"""
+    """Scheduler for pre-generating recommendations for active users"""
 
     def __init__(self):
-        self._is_running = False
-        self._scheduler_task: asyncio.Task | None = None
-
-        # Schedule recommendations generation daily at 2 AM
-        self.generation_time = time(2, 0)  # 2:00 AM
-
-        # Schedule cleanup weekly on Sunday at 3 AM
-        self.cleanup_time = time(3, 0)  # 3:00 AM
-        self.cleanup_weekday = 6  # Sunday
+        self.is_running = False
+        self.task: asyncio.Task | None = None
+        self.interval_hours = 6
+        self.active_user_days = 7
 
     async def start(self):
-        """Start the scheduler"""
-        if not self._is_running:
-            self._is_running = True
-            self._scheduler_task = asyncio.create_task(self._scheduler_loop())
+        """Start the recommendation scheduler"""
+        if not self.is_running:
+            self.is_running = True
+            self.task = asyncio.create_task(self._scheduler_loop())
             logger.info('Recommendation scheduler started')
 
     async def stop(self):
-        """Stop the scheduler"""
-        if self._is_running:
-            self._is_running = False
-            if self._scheduler_task:
-                self._scheduler_task.cancel()
-                import contextlib
-
-                with contextlib.suppress(asyncio.CancelledError):
-                    await self._scheduler_task
+        """Stop the recommendation scheduler"""
+        if self.is_running:
+            self.is_running = False
+            if self.task:
+                self.task.cancel()
+                try:
+                    await self.task
+                except asyncio.CancelledError:
+                    logger.info('Recommendation scheduler cancelled')
             logger.info('Recommendation scheduler stopped')
 
     async def _scheduler_loop(self):
         """Main scheduler loop"""
-        from .recommendation_job_queue import recommendation_job_queue
-
-        while self._is_running:
+        while self.is_running:
             try:
-                now = datetime.now(UTC)
-
-                # Check if it's time for daily recommendation generation
-                if await self._should_run_generation(now):
-                    logger.info('Scheduling daily recommendation generation')
-                    try:
-                        job_id = await recommendation_job_queue.enqueue_all_users_job()
-                        logger.info(
-                            f'Enqueued daily recommendation generation job: {job_id}'
-                        )
-                    except Exception as e:
-                        logger.error(
-                            f'Failed to enqueue daily recommendation generation: {e}'
-                        )
-
-                # Check if it's time for weekly cleanup
-                if await self._should_run_cleanup(now):
-                    logger.info('Scheduling weekly recommendation cleanup')
-                    try:
-                        job_id = await recommendation_job_queue.enqueue_cleanup_job()
-                        logger.info(f'Enqueued weekly cleanup job: {job_id}')
-                    except Exception as e:
-                        logger.error(f'Failed to enqueue weekly cleanup: {e}')
-
-                # Sleep for 1 hour before next check
-                await asyncio.sleep(3600)  # 1 hour
-
+                await self._run_scheduled_generation()
+                await asyncio.sleep(self.interval_hours * 3600)
+            except asyncio.CancelledError:
+                break
             except Exception as e:
-                logger.error(f'Error in recommendation scheduler: {e}')
-                await asyncio.sleep(300)  # 5 minutes on error
+                logger.error(f'Error in recommendation scheduler: {e}', exc_info=True)
+                await asyncio.sleep(3600)
 
-    async def _should_run_generation(self, now: datetime) -> bool:
-        """Check if it's time to run daily recommendation generation"""
+    async def _run_scheduled_generation(self):
+        """Run scheduled recommendation generation for active users (non-blocking)"""
+        session_ctx = SessionLocal()
+        session = await session_ctx.__aenter__()
 
-        # Convert to local time for scheduling
-        local_time = now.astimezone()
+        try:
+            active_users = await self._get_users_needing_recommendations(session)
+            if not active_users:
+                logger.info('No users need recommendation updates')
+                return
 
-        # Check if current time is within 1 hour of scheduled generation time
-        scheduled_today = local_time.replace(
-            hour=self.generation_time.hour,
-            minute=self.generation_time.minute,
-            second=0,
-            microsecond=0,
+            logger.info(
+                f'Starting scheduled recommendation generation for {len(active_users)} users'
+            )
+
+            success_count, error_count = 0, 0
+            loop = asyncio.get_running_loop()
+
+            for user in active_users:
+                user_id = user.id
+                try:
+                    # Run sync recommendation generation in thread pool
+                    result = await loop.run_in_executor(
+                        None,  # use default ThreadPoolExecutor
+                        background_recommendation_service.generate_recommendations_for_user_sync,
+                        user_id,
+                    )
+                    if result.get('status') == 'success':
+                        success_count += 1
+                    else:
+                        error_count += 1
+                        logger.warning(
+                            f'Failed to generate recommendations for user {user_id}: {result.get("message")}'
+                        )
+                except Exception as e:
+                    error_count += 1
+                    logger.error(
+                        f'Error generating recommendations for user {user_id}: {e}'
+                    )
+
+            logger.info(
+                f'Scheduled recommendation generation completed: {success_count} success, {error_count} errors'
+            )
+
+        except Exception as e:
+            logger.error(
+                f'Error in scheduled recommendation generation: {e}', exc_info=True
+            )
+        finally:
+            await session_ctx.__aexit__(None, None, None)
+
+    async def _get_users_needing_recommendations(
+        self, session: AsyncSession
+    ) -> list[User]:
+        """Get users who need fresh recommendations"""
+        active_cutoff = datetime.now(UTC) - timedelta(days=self.active_user_days)
+        stale_cutoff = datetime.now(UTC) - timedelta(hours=12)
+
+        active_users_result = await session.execute(
+            select(User).where(
+                and_(
+                    User.is_active,
+                    User.updated_at > active_cutoff,
+                )
+            )
         )
+        active_users = active_users_result.scalars().all()
+        if not active_users:
+            return []
 
-        # Check if we're within the execution window (±30 minutes)
-        time_diff = abs((local_time - scheduled_today).total_seconds())
+        users_needing_recommendations = []
+        for user in active_users:
+            user_id = user.id
+            cached_result = await session.execute(
+                select(CachedRecommendation)
+                .where(
+                    and_(
+                        CachedRecommendation.user_id == user_id,
+                        CachedRecommendation.generated_at > stale_cutoff,
+                    )
+                )
+                .order_by(CachedRecommendation.generated_at.desc())
+                .limit(1)
+            )
+            cached = cached_result.scalar_one_or_none()
+            if not cached:
+                users_needing_recommendations.append(user)
 
-        return time_diff <= 1800  # 30 minutes window
+        return users_needing_recommendations
 
-    async def _should_run_cleanup(self, now: datetime) -> bool:
-        """Check if it's time to run weekly cleanup"""
+    async def generate_for_user_now(self, user_id: str) -> dict[str, Any]:
+        """Generate recommendations for a specific user immediately"""
+        try:
+            loop = asyncio.get_running_loop()
+            result = await loop.run_in_executor(
+                None,
+                background_recommendation_service.generate_recommendations_for_user_sync,
+                user_id,
+            )
+            return result
+        except Exception as e:
+            logger.error(f'Error generating recommendations for user {user_id}: {e}')
+            return {'status': 'error', 'message': str(e)}
 
-        # Convert to local time for scheduling
-        local_time = now.astimezone()
-
-        # Check if today is the cleanup day (Sunday)
-        if local_time.weekday() != self.cleanup_weekday:
-            return False
-
-        # Check if current time is within 1 hour of scheduled cleanup time
-        scheduled_today = local_time.replace(
-            hour=self.cleanup_time.hour,
-            minute=self.cleanup_time.minute,
-            second=0,
-            microsecond=0,
-        )
-
-        # Check if we're within the execution window (±30 minutes)
-        time_diff = abs((local_time - scheduled_today).total_seconds())
-
-        return time_diff <= 1800  # 30 minutes window
-
-    async def trigger_immediate_generation(self) -> str:
-        """Trigger immediate recommendation generation for all users"""
-        from .recommendation_job_queue import recommendation_job_queue
-
-        logger.info('Triggering immediate recommendation generation')
-        job_id = await recommendation_job_queue.enqueue_all_users_job()
-        logger.info(f'Enqueued immediate recommendation generation job: {job_id}')
-        return job_id
-
-    async def trigger_immediate_cleanup(self) -> str:
-        """Trigger immediate cleanup of expired recommendations"""
-        from .recommendation_job_queue import recommendation_job_queue
-
-        logger.info('Triggering immediate recommendation cleanup')
-        job_id = await recommendation_job_queue.enqueue_cleanup_job()
-        logger.info(f'Enqueued immediate cleanup job: {job_id}')
-        return job_id
+    async def get_scheduler_status(self) -> dict[str, Any]:
+        """Get current scheduler status"""
+        return {
+            'is_running': self.is_running,
+            'interval_hours': self.interval_hours,
+            'active_user_days': self.active_user_days,
+            'next_run_in_hours': self.interval_hours if self.is_running else None,
+        }
 
 
 # Global scheduler instance

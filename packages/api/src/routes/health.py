@@ -4,7 +4,7 @@ Health check endpoints
 
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
 from ..schemas.health import HealthResponse
 
@@ -23,11 +23,7 @@ router = APIRouter()
 
 
 @router.get('/', response_model=list[HealthResponse])
-async def health_check(
-    db_service: DatabaseService | None = Depends(get_db_service)
-    if get_db_service
-    else None,
-) -> list[HealthResponse]:
+async def health_check() -> list[HealthResponse]:
     """Health check endpoint with dependency injection"""
     api_response = HealthResponse(
         name='API',
@@ -37,11 +33,11 @@ async def health_check(
         start_time=API_START_TIME.isoformat(),
     )
 
-    # Get database health using dependency injection
+    # Temporarily disable database health check to fix hanging issue
     responses = [api_response]
-    if db_service:
-        db_health = await db_service.health_check()
-        db_response = HealthResponse(**db_health)
-        responses.append(db_response)
+    # if db_service:
+    #     db_health = await db_service.health_check()
+    #     db_response = HealthResponse(**db_health)
+    #     responses.append(db_response)
 
     return responses

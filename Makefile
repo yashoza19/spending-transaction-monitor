@@ -508,6 +508,8 @@ run-local: setup-dev-env
 stop-local:
 	@echo "Stopping local Podman Compose services..."
 	podman-compose -f podman-compose.yml down
+	@echo "Removing db data..."
+	podman volume rm --all || true
 
 .PHONY: build-local
 build-local:

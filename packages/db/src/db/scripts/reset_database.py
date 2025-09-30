@@ -25,6 +25,8 @@ async def reset_database() -> None:
         try:
             # Delete in reverse dependency order to avoid foreign key violations
             # Even though we have CASCADE, it's safer to be explicit
+            print('🔄 Deleting cached_recommendations...')
+            await session.execute(text('DELETE FROM cached_recommendations'))
 
             print('📋 Deleting alert_notifications...')
             await session.execute(text('DELETE FROM alert_notifications'))

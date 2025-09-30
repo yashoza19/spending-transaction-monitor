@@ -659,36 +659,32 @@ async def get_alert_recommendations(
             if cached_recommendations:
                 return AlertRecommendationResponse(**cached_recommendations)
 
-        # If no cached recommendations or force refresh, check if we should generate in background
+        # If no cached recommendations or force refresh, enqueue background job
         if force_refresh:
-            # For force refresh, generate immediately
-            recommendations = await recommendation_service.get_recommendations(
-                user_id, session
-            )
-
-            if 'error' in recommendations:
-                raise HTTPException(status_code=404, detail=recommendations['error'])
-
-            # Cache the new recommendations in background
-            await background_recommendation_service._cache_recommendations(
-                user_id, recommendations, session
-            )
-
-            return AlertRecommendationResponse(**recommendations)
-        else:
-            # No cached recommendations found, enqueue background job and return message
+            # For force refresh, enqueue job and return placeholder immediately
             await recommendation_job_queue.enqueue_single_user_job(user_id)
+            logger.info(f'Enqueued force refresh job for user {user_id}')
+        else:
+            # No cached recommendations found, enqueue background job
+            await recommendation_job_queue.enqueue_single_user_job(user_id)
+            logger.info(f'Enqueued background job for user {user_id}')
 
-            # For now, generate synchronously as fallback
-            # In production, you might want to return a different response indicating processing
-            recommendations = await recommendation_service.get_recommendations(
-                user_id, session
-            )
+        # Return placeholder recommendations immediately while background job processes
+        from src.services.placeholder_recommendation_service import (
+            PlaceholderRecommendationService,
+        )
 
-            if 'error' in recommendations:
-                raise HTTPException(status_code=404, detail=recommendations['error'])
+        placeholder_service = PlaceholderRecommendationService()
 
-            return AlertRecommendationResponse(**recommendations)
+        # Get user data for placeholder recommendations
+        user = await user_service.get_user(user_id, session)
+        if not user:
+            raise HTTPException(status_code=404, detail='User not found')
+
+        placeholder_recommendations = (
+            placeholder_service.get_placeholder_recommendations(user)
+        )
+        return AlertRecommendationResponse(**placeholder_recommendations)
 
     except Exception as e:
         print(f'Error getting recommendations: {e}')
@@ -887,3 +883,110 @@ async def get_recommendation_job_status(
         'error': job.error,
         'created_at': job.created_at,
     }
+
+
+@router.get('/recommendations/metrics')
+async def get_recommendation_metrics(
+    last_n_minutes: int = Query(60, description='Minutes to look back for metrics'),
+    current_user: dict = Depends(require_authentication),
+):
+    """Get recommendation generation performance metrics (Admin only)"""
+
+    # Check if user is admin
+    if 'admin' not in current_user.get('roles', []):
+        raise HTTPException(status_code=403, detail='Admin access required')
+
+    try:
+        from src.services.recommendation_metrics import recommendation_metrics
+
+        summary = recommendation_metrics.get_performance_summary(last_n_minutes)
+
+        return {
+            'time_range_minutes': last_n_minutes,
+            'metrics': summary,
+            'generated_at': datetime.now(UTC).isoformat(),
+        }
+    except Exception as e:
+        logger.error(f'Error getting recommendation metrics: {e}')
+        raise HTTPException(
+            status_code=500, detail=f'Failed to get metrics: {str(e)}'
+        ) from e
+
+
+@router.post('/recommendations/test-websocket')
+async def test_websocket_notification(
+    user_id: str = Query(..., description='User ID to send test notification to'),
+    current_user: dict = Depends(require_authentication),
+):
+    """Test WebSocket notification (Admin only)"""
+
+    # Check if user is admin
+    if 'admin' not in current_user.get('roles', []):
+        raise HTTPException(status_code=403, detail='Admin access required')
+
+    try:
+        from src.routes.websocket import notify_recommendations_ready
+
+        test_recommendations = {
+            'user_id': user_id,
+            'recommendation_type': 'test',
+            'recommendations': [
+                {
+                    'title': 'Test Recommendation',
+                    'description': 'This is a test recommendation',
+                    'natural_language_query': 'Test alert',
+                    'category': 'test',
+                    'priority': 'high',
+                    'reasoning': 'This is a test notification',
+                }
+            ],
+            'generated_at': datetime.now(UTC).isoformat(),
+            'is_placeholder': False,
+        }
+
+        await notify_recommendations_ready(user_id, test_recommendations)
+
+        return {
+            'status': 'success',
+            'message': f'Test WebSocket notification sent to user {user_id}',
+            'user_id': user_id,
+        }
+    except Exception as e:
+        logger.error(f'Error sending test WebSocket notification: {e}')
+        raise HTTPException(
+            status_code=500, detail=f'Failed to send test notification: {str(e)}'
+        ) from e
+
+
+@router.post('/recommendations/trigger-generation')
+async def trigger_recommendation_generation(
+    current_user: dict = Depends(require_authentication),
+):
+    """Manually trigger recommendation generation for the current user"""
+    try:
+        user_id = current_user['id']
+
+        # Import the background service here to avoid startup issues
+        from ..services.background_recommendation_service import (
+            background_recommendation_service,
+        )
+
+        # Generate recommendations synchronously
+        result = (
+            background_recommendation_service.generate_recommendations_for_user_sync(
+                user_id
+            )
+        )
+
+        return {
+            'message': 'Recommendation generation triggered successfully',
+            'user_id': user_id,
+            'result': result,
+        }
+
+    except Exception as e:
+        logger.error(f'Error triggering recommendation generation: {e}')
+        raise HTTPException(
+            status_code=500,
+            detail=f'Failed to trigger recommendation generation: {str(e)}',
+        ) from e
