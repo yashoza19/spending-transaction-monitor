@@ -4,7 +4,10 @@ import type {
   Alert,
   AlertRule,
 } from '../schemas/transaction';
-import type { AlertRecommendation, AlertRecommendationsResponse } from '../schemas/recommendation';
+import type {
+  AlertRecommendation,
+  AlertRecommendationsResponse,
+} from '../schemas/recommendation';
 import { type ApiTransactionResponse, type ApiAlertRuleResponse } from './user';
 
 // Type definitions for API responses

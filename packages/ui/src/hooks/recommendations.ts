@@ -19,19 +19,22 @@ export const useRecommendations = () => {
   });
 
   // Merge server data with local state (removing locally created recommendations)
-  const recommendations = serverData?.recommendations?.filter(
-    (rec: AlertRecommendation) => !localRemovedIds.has(rec.natural_language_query)
-  ) || [];
+  const recommendations =
+    serverData?.recommendations?.filter(
+      (rec: AlertRecommendation) => !localRemovedIds.has(rec.natural_language_query),
+    ) || [];
 
   const removeRecommendation = (naturalLanguageQuery: string) => {
-    setLocalRemovedIds(prev => new Set(prev).add(naturalLanguageQuery));
+    setLocalRemovedIds((prev) => new Set(prev).add(naturalLanguageQuery));
   };
 
   return {
-    data: serverData ? {
-      ...serverData,
-      recommendations,
-    } : null,
+    data: serverData
+      ? {
+          ...serverData,
+          recommendations,
+        }
+      : null,
     isLoading,
     error,
     refetch,

@@ -2,13 +2,7 @@ import { useState } from 'react';
 import { Card } from '../atoms/card/card';
 import { Button } from '../atoms/button/button';
 import { Badge } from '../atoms/badge/badge';
-import {
-  ChevronDown,
-  ChevronRight,
-  Plus,
-  AlertTriangle,
-  Loader2,
-} from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, AlertTriangle, Loader2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { categoryIcons, priorityColors } from '../../lib/recommendation-constants';
 import { useCreateRuleFromRecommendation } from '../../hooks/recommendations';
@@ -19,13 +13,17 @@ interface RecommendationCardProps {
   onCreated?: () => void;
 }
 
-export function RecommendationCard({ recommendation, onCreated }: RecommendationCardProps) {
+export function RecommendationCard({
+  recommendation,
+  onCreated,
+}: RecommendationCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isCreated, setIsCreated] = useState(false);
   const createRuleMutation = useCreateRuleFromRecommendation();
 
   const IconComponent =
-    categoryIcons[recommendation.category as keyof typeof categoryIcons] || AlertTriangle;
+    categoryIcons[recommendation.category as keyof typeof categoryIcons] ||
+    AlertTriangle;
 
   const handleCreateRule = async () => {
     try {

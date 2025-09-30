@@ -1,9 +1,4 @@
-import {
-  Shield,
-  CreditCard,
-  MapPin,
-  TrendingUp,
-} from 'lucide-react';
+import { Shield, CreditCard, MapPin, TrendingUp } from 'lucide-react';
 
 export const categoryIcons = {
   fraud_protection: Shield,

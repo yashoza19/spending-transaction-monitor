@@ -138,7 +138,8 @@ export const useCreateRuleFromRecommendation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (recommendation: AlertRecommendation) => alertService.createRuleFromRecommendation(recommendation),
+    mutationFn: (recommendation: AlertRecommendation) =>
+      alertService.createRuleFromRecommendation(recommendation),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['alertRules'] });
       queryClient.invalidateQueries({ queryKey: ['alertRecommendations'] });

@@ -30,6 +30,12 @@ export const RecommendationCreateRequestSchema = z.object({
 });
 
 export type AlertRecommendation = z.infer<typeof AlertRecommendationSchema>;
-export type AlertRecommendationsResponse = z.infer<typeof AlertRecommendationsResponseSchema>;
-export type RecommendationCategoriesResponse = z.infer<typeof RecommendationCategoriesResponseSchema>;
-export type RecommendationCreateRequest = z.infer<typeof RecommendationCreateRequestSchema>;
+export type AlertRecommendationsResponse = z.infer<
+  typeof AlertRecommendationsResponseSchema
+>;
+export type RecommendationCategoriesResponse = z.infer<
+  typeof RecommendationCategoriesResponseSchema
+>;
+export type RecommendationCreateRequest = z.infer<
+  typeof RecommendationCreateRequestSchema
+>;
