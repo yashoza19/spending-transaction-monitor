@@ -27,9 +27,13 @@ import {
   useToggleAlertRule,
   useDeleteAlertRule,
   useValidateAlertRule,
+<<<<<<< HEAD
 } from '../hooks/alert';
 } from '../hooks/alert';
 import { useAlertRecommendations, useCreateRuleFromRecommendation } from '../hooks/transactions';
+=======
+} from '../hooks/transactions';
+>>>>>>> c4bf0fe (fix: address all UI comments)
 import { cn } from '../lib/utils';
 import { statusColors } from '../lib/colors';
 import type { CreateAlertRuleInput } from '../schemas/alert-rule';
@@ -44,10 +48,7 @@ export const Route = createFileRoute('/alerts')({
 
 function AlertsPage() {
   const { data: rules, isLoading } = useAlertRules();
-  const { data: recommendations, isLoading: isLoadingRecommendations } =
-    useAlertRecommendations();
   const createRuleFromValidation = useCreateAlertRuleFromValidation();
-  const createRuleFromRecommendation = useCreateRuleFromRecommendation();
   const validateRule = useValidateAlertRule();
   const toggleRule = useToggleAlertRule();
   const deleteRule = useDeleteAlertRule();
@@ -141,26 +142,6 @@ function AlertsPage() {
     });
   };
 
-  const handleCreateRuleFromRecommendation = async (recommendation: {
-    title: string;
-    description: string;
-    natural_language_query: string;
-    category: string;
-    priority: 'high' | 'medium' | 'low';
-    reasoning: string;
-  }) => {
-    try {
-      setCreateError(null);
-      await createRuleFromRecommendation.mutateAsync(recommendation);
-    } catch (error) {
-      console.error('Failed to create rule from recommendation:', error);
-      setCreateError({
-        rule: recommendation.title,
-        message:
-          'Failed to create the alert rule from recommendation. Please try again.',
-      });
-    }
-  };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -180,11 +161,7 @@ function AlertsPage() {
       </div>
 
       {/* Alert Recommendations */}
-      <AlertRecommendations
-        recommendations={recommendations || null}
-        isLoading={isLoadingRecommendations}
-        onCreateRule={handleCreateRuleFromRecommendation}
-      />
+      <AlertRecommendations />
 
       {/* Validation Result Display */}
       {validationResult && (

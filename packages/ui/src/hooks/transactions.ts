@@ -89,35 +89,7 @@ export const useDeleteTransaction = () => {
 };
 
 // Alert recommendation hooks
-export const useAlertRecommendations = () => {
-  return useQuery({
-    queryKey: ['alertRecommendations'],
-    queryFn: () => alertService.getAlertRecommendations(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-};
-
-export const useCreateRuleFromRecommendation = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (recommendation: {
-      title: string;
-      description: string;
-      natural_language_query: string;
-      category: string;
-      priority: string;
-      reasoning: string;
-    }) => alertService.createRuleFromRecommendation(recommendation),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['alertRules'] });
-      // Small delay to ensure rule is saved before refreshing recommendations
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['alertRecommendations'] });
-      }, 500);
-    },
-  });
-};
+// Recommendation hooks moved to hooks/recommendations.ts
 
 export const useTransactionChartData = (timeRange: '7d' | '30d' | '90d' | '1y') => {
   return useQuery({
