@@ -5,6 +5,7 @@ import {
   userService,
 } from '../services/api-transaction';
 import type { TransactionStats } from '../schemas/transaction';
+import type { AlertRecommendation } from '../schemas/recommendation';
 
 interface AlertRule {
   name: string;
@@ -137,20 +138,10 @@ export const useCreateRuleFromRecommendation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (recommendation: {
-      title: string;
-      description: string;
-      natural_language_query: string;
-      category: string;
-      priority: string;
-      reasoning: string;
-    }) => alertService.createRuleFromRecommendation(recommendation),
+    mutationFn: (recommendation: AlertRecommendation) => alertService.createRuleFromRecommendation(recommendation),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['alertRules'] });
-      // Small delay to ensure rule is saved before refreshing recommendations
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['alertRecommendations'] });
-      }, 500);
+      queryClient.invalidateQueries({ queryKey: ['alertRecommendations'] });
     },
   });
 };

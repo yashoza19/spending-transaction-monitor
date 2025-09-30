@@ -4,6 +4,7 @@ import type {
   Alert,
   AlertRule,
 } from '../schemas/transaction';
+import type { AlertRecommendation, AlertRecommendationsResponse } from '../schemas/recommendation';
 import { type ApiTransactionResponse, type ApiAlertRuleResponse } from './user';
 
 // Type definitions for API responses
@@ -479,19 +480,7 @@ export const realAlertService = {
   },
 
   // Get alert recommendations
-  async getAlertRecommendations(): Promise<{
-    user_id: string;
-    recommendation_type: 'new_user' | 'transaction_based';
-    recommendations: Array<{
-      title: string;
-      description: string;
-      natural_language_query: string;
-      category: string;
-      priority: 'high' | 'medium' | 'low';
-      reasoning: string;
-    }>;
-    generated_at: string;
-  }> {
+  async getAlertRecommendations(): Promise<AlertRecommendationsResponse> {
     try {
       const response = await apiClient.fetch('/api/alerts/recommendations');
 
@@ -514,14 +503,7 @@ export const realAlertService = {
   },
 
   // Create rule from recommendation
-  async createRuleFromRecommendation(recommendation: {
-    title: string;
-    description: string;
-    natural_language_query: string;
-    category: string;
-    priority: string;
-    reasoning: string;
-  }): Promise<{
+  async createRuleFromRecommendation(recommendation: AlertRecommendation): Promise<{
     message: string;
     rule_id: string;
     rule_name: string;
