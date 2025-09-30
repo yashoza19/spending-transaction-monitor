@@ -1,9 +1,4 @@
-import type {
-  Transaction,
-  TransactionStats,
-  Alert,
-  AlertRule,
-} from '../schemas/transaction';
+import type { AlertRecommendation, AlertRecommendationsResponse } from '../schemas/recommendation';
 import { type ApiTransactionResponse, type ApiAlertRuleResponse } from './user';
 
 // Type definitions for API responses
@@ -708,6 +703,12 @@ import type {
   AlertRule,
 } from '../schemas/transaction';
 import type { AlertRecommendation, AlertRecommendationsResponse } from '../schemas/recommendation';
+=======
+import type {
+  AlertRecommendation,
+  AlertRecommendationsResponse,
+} from '../schemas/recommendation';
+>>>>>>> 9e9480d (fix: resolve AsyncMock runtime warnings in tests)
 import { type ApiTransactionResponse, type ApiAlertRuleResponse } from './user';
 
 // Type definitions for API responses

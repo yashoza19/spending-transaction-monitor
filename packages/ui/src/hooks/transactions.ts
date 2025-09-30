@@ -88,8 +88,7 @@ export const useDeleteTransaction = () => {
   });
 };
 
-// Alert recommendation hooks
-// Recommendation hooks moved to hooks/recommendations.ts
+// Alert recommendation hooks moved to `hooks/recommendations.ts`
 
 export const useTransactionChartData = (timeRange: '7d' | '30d' | '90d' | '1y') => {
   return useQuery({

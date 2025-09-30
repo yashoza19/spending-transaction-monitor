@@ -5,10 +5,12 @@ import { RecommendationCard } from './recommendation-card';
 import { useRecommendations } from '../../hooks/recommendations';
 import type { AlertRecommendation } from '../../schemas/recommendation';
 
-
 export function AlertRecommendations() {
-  const { data: recommendations, isLoading, removeRecommendation } = useRecommendations();
-
+  const {
+    data: recommendations,
+    isLoading,
+    removeRecommendation,
+  } = useRecommendations();
 
   if (isLoading) {
     return (
