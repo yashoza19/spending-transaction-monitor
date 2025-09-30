@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { Card } from '../../components/atoms/card/card';
 import { Button } from '../../components/atoms/button/button';
@@ -25,7 +25,8 @@ import {
   useToggleAlertRule,
   useDeleteAlertRule,
   useValidateAlertRule,
-} from '../../hooks/transactions';
+} from '../../hooks/alert';
+import { useRecommendations } from '../../hooks/recommendations';
 import { cn } from '../../lib/utils';
 import { statusColors } from '../../lib/colors';
 import type { CreateAlertRuleInput } from '../../schemas/alert-rule';
@@ -36,6 +37,8 @@ export const Route = createFileRoute('/_protected/alerts')({
 
 function AlertsPage() {
   const { data: rules, isLoading } = useAlertRules();
+  const { data: recommendations, isLoading: isLoadingRecommendations } =
+    useRecommendations();
   const createRuleFromValidation = useCreateAlertRuleFromValidation();
   const validateRule = useValidateAlertRule();
   const toggleRule = useToggleAlertRule();
@@ -52,6 +55,15 @@ function AlertsPage() {
     null,
   );
   const [pendingRule, setPendingRule] = useState<string | null>(null);
+  const [currentRecommendations, setCurrentRecommendations] = useState(recommendations);
+
+  // Update current recommendations when data changes
+  useEffect(() => {
+    setCurrentRecommendations(recommendations);
+  }, [recommendations]);
+
+  // Get current user ID from the recommendations data
+  const currentUserId = recommendations?.user_id || 'u-011';
 
   const handleValidateRule = async (data: CreateAlertRuleInput) => {
     try {
@@ -82,7 +94,7 @@ function AlertsPage() {
     try {
       setCreateError(null);
       await createRuleFromValidation.mutateAsync({
-        alert_rule: validationResult.alert_rule,
+        alert_rule: validationResult.alert_rule as unknown as Record<string, unknown>,
         sql_query: validationResult.sql_query,
         natural_language_query: pendingRule,
       });
@@ -130,6 +142,8 @@ function AlertsPage() {
     });
   };
 
+  // Recommendation creation handled within component via its own hook
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="text-center mt-4 mb-8">
@@ -148,7 +162,13 @@ function AlertsPage() {
       </div>
 
       {/* Alert Recommendations */}
-      <AlertRecommendations />
+      {/* Recommendations handled inside component via hooks; render container only */}
+      <AlertRecommendations
+        recommendations={currentRecommendations || null}
+        isLoading={isLoadingRecommendations}
+        onCreateRule={async () => Promise.resolve()}
+        userId={currentUserId}
+      />
 
       {/* Validation Result Display */}
       {validationResult && (
