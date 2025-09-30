@@ -1,7 +1,7 @@
 """add location distance calculation function
 
-Revision ID: location_distance_func
-Revises: 1b64d9695755
+Revision ID: e35d4db01ac2
+Revises: 5b7ab65a1fe2
 Create Date: 2025-09-15 10:00:00.000000
 
 """
@@ -10,8 +10,8 @@ from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision = 'location_distance_func'
-down_revision = '1b64d9695755'
+revision = 'e35d4db01ac2'
+down_revision = '5b7ab65a1fe2'
 branch_labels = None
 depends_on = None
 

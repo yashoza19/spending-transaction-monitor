@@ -411,6 +411,8 @@ async def require_authentication(
             test_user_email = request.headers.get('X-Test-User-Email')
             if test_user_email:
                 return await get_test_user(test_user_email, session)
+            else:
+                return await get_dev_fallback_user(session)
 
         # Fallback to current behavior (first user or mock)
         return await get_dev_fallback_user(session)

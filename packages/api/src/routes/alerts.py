@@ -315,7 +315,6 @@ async def delete_alert_rule(
 # Alert Notifications endpoints
 @router.get('/notifications', response_model=list[AlertNotificationOut])
 async def get_alert_notifications(
-    user_id: str | None = Query(None, description='Filter by user ID'),
     alert_rule_id: str | None = Query(None, description='Filter by alert rule ID'),
     status: str | None = Query(None, description='Filter by notification status'),
     session: AsyncSession = Depends(get_db),
@@ -324,8 +323,8 @@ async def get_alert_notifications(
     """Get all alert notifications with optional filtering"""
     query = select(AlertNotification)
 
-    if user_id:
-        query = query.where(AlertNotification.user_id == user_id)
+    if current_user['id']:
+        query = query.where(AlertNotification.user_id == current_user['id'])
 
     if alert_rule_id:
         query = query.where(AlertNotification.alert_rule_id == alert_rule_id)

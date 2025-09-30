@@ -12,6 +12,11 @@ UI_IMAGE = $(REGISTRY_URL)/$(REPOSITORY)/$(PROJECT_NAME)-ui:$(IMAGE_TAG)
 API_IMAGE = $(REGISTRY_URL)/$(REPOSITORY)/$(PROJECT_NAME)-api:$(IMAGE_TAG)
 DB_IMAGE = $(REGISTRY_URL)/$(REPOSITORY)/$(PROJECT_NAME)-db:$(IMAGE_TAG)
 
+# Local development image names (tagged as 'local')
+UI_IMAGE_LOCAL = $(REGISTRY_URL)/$(REPOSITORY)/$(PROJECT_NAME)-ui:local
+API_IMAGE_LOCAL = $(REGISTRY_URL)/$(REPOSITORY)/$(PROJECT_NAME)-api:local
+DB_IMAGE_LOCAL = $(REGISTRY_URL)/$(REPOSITORY)/$(PROJECT_NAME)-db:local
+
 # Environment file paths
 ENV_FILE_DEV = .env.development
 ENV_FILE_PROD = .env.production
@@ -102,13 +107,8 @@ check-env-prod:
 # Set up environment file for local development
 .PHONY: setup-dev-env
 setup-dev-env: check-env-dev
-	@echo "Setting up development environment file for local services..."
-	@if [ ! -f ".env" ] || [ "$(ENV_FILE_DEV)" -nt ".env" ]; then \
-		echo "Copying $(ENV_FILE_DEV) to .env for podman-compose..."; \
-		cp $(ENV_FILE_DEV) .env; \
-	else \
-		echo ".env is already up to date"; \
-	fi
+	@echo "Using development environment file: $(ENV_FILE_DEV)"
+	@echo "✅ Development environment file is ready"
 
 # Create environment file from example
 .PHONY: create-env-file
@@ -229,13 +229,13 @@ help:
 	@echo "    port-forward-db    Forward database to localhost:5432"
 	@echo ""
 	@echo   "  Local Development:"
-	@echo "    run-local          Start all services (always pull latest from registry)"
-	@echo "    build-local        Build local Podman images"
-	@echo "    build-run-local    Build and run all services locally - for development"
+	@echo "    run-local          Start all services (always pull latest from quay.io registry)"
+	@echo "    build-local        Build local Podman images and tag them as 'local'"
+	@echo "    build-run-local    Build and run all services locally using 'local' tagged images"
 	@echo "    stop-local         Stop local Podman Compose services"
 	@echo "    logs-local         Show logs from local services"
 	@echo "    reset-local        Reset environment (pull latest, restart with fresh data)"
-	@echo "    pull-local         Pull latest images from registry"
+	@echo "    pull-local         Pull latest images from quay.io registry"
 	@echo "    setup-local        Complete local setup (pull, run, migrate, seed)"
 	@echo ""
 	@echo "  Helm:"
@@ -253,6 +253,7 @@ help:
 	@echo "    status             Show deployment status"
 	@echo "    clean-all          Clean up all resources"
 	@echo "    clean-images       Remove local Podman images"
+	@echo "    clean-local-images Remove local development images (tagged as 'local')"
 	@echo "    check-env-file     Check if environment file exists"
 	@echo "    create-env-file    Create environment file from example"
 	@echo ""
@@ -267,8 +268,9 @@ help:
 	@echo "      make setup-dev-env    # Set up .env from .env.development for local use"
 	@echo ""
 	@echo "Examples:"
-	@echo "  make setup-local                    # Complete local setup"
-	@echo "  make run-local                      # Start all services"
+	@echo "  make setup-local                    # Complete local setup (pulls from quay.io)"
+	@echo "  make run-local                      # Start all services (pulls latest from quay.io)"
+	@echo "  make build-run-local                # Build and run with local images (tagged as 'local')"
 	@echo "  make test-alert-rules               # Interactive alert rule testing"
 	@echo "  make list-alert-samples             # List available alert samples"
 	@echo "  make NAMESPACE=my-app deploy        # Deploy to custom namespace"
@@ -430,8 +432,13 @@ clean-images:
 	@echo "Cleaning up local images..."
 	@podman rmi $(UI_IMAGE) $(API_IMAGE) $(DB_IMAGE) || true
 
+.PHONY: clean-local-images
+clean-local-images:
+	@echo "Cleaning up local development images..."
+	@podman rmi $(UI_IMAGE_LOCAL) $(API_IMAGE_LOCAL) $(DB_IMAGE_LOCAL) || true
+
 .PHONY: clean-all
-clean-all: undeploy-all clean-images
+clean-all: undeploy-all clean-images clean-local-images
 	@echo "Complete cleanup finished"
 
 # Status and logs
@@ -482,9 +489,9 @@ run-local: setup-dev-env
 	@echo "  - SMTP Web UI: http://localhost:3002"
 	@echo "  - Database: localhost:5432"
 	@echo ""
-	@echo "Pulling latest images from registry..."
-	podman-compose -f podman-compose.yml pull
-	podman-compose -f podman-compose.yml up -d
+	@echo "Pulling latest images from quay.io registry..."
+	IMAGE_TAG=latest podman-compose -f podman-compose.yml pull
+	IMAGE_TAG=latest podman-compose -f podman-compose.yml up -d
 	@echo ""
 	@echo "Waiting for database to be ready..."
 	@sleep 15
@@ -505,13 +512,18 @@ stop-local:
 
 .PHONY: build-local
 build-local:
-	@echo "Building local Podman images..."
+	@echo "Building local Podman images with 'local' tag..."
 	podman-compose -f podman-compose.yml -f podman-compose.build.yml build
+	@echo "Tagging built images as 'local'..."
+	podman tag $(UI_IMAGE) $(UI_IMAGE_LOCAL) || true
+	podman tag $(API_IMAGE) $(API_IMAGE_LOCAL) || true
+	podman tag $(DB_IMAGE) $(DB_IMAGE_LOCAL) || true
+	@echo "✅ Local images built and tagged successfully"
 
 .PHONY: pull-local
 pull-local:
-	@echo "Pulling latest images from registry..."
-	podman-compose -f podman-compose.yml pull
+	@echo "Pulling latest images from quay.io registry..."
+	IMAGE_TAG=latest podman-compose -f podman-compose.yml pull
 
 .PHONY: logs-local
 logs-local:
@@ -523,9 +535,9 @@ reset-local: setup-dev-env
 	@echo "Resetting local environment..."
 	@echo "This will stop services, remove containers and volumes, pull latest images, and restart"
 	podman-compose -f podman-compose.yml down -v
-	@echo "Pulling latest images from registry..."
-	podman-compose -f podman-compose.yml pull
-	podman-compose -f podman-compose.yml up -d
+	@echo "Pulling latest images from quay.io registry..."
+	IMAGE_TAG=latest podman-compose -f podman-compose.yml pull
+	IMAGE_TAG=latest podman-compose -f podman-compose.yml up -d
 	@echo ""
 	@echo "Waiting for database to be ready..."
 	@sleep 15
@@ -538,7 +550,7 @@ reset-local: setup-dev-env
 
 .PHONY: build-run-local
 build-run-local: setup-dev-env build-local
-	@echo "Starting all services locally with freshly built images..."
+	@echo "Starting all services locally with freshly built images (tagged as 'local')..."
 	@echo "This will start: PostgreSQL, API, UI, nginx proxy, and SMTP server"
 	@echo "Services will be available at:"
 	@echo "  - Frontend: http://localhost:3000"
@@ -548,7 +560,7 @@ build-run-local: setup-dev-env build-local
 	@echo "  - SMTP Web UI: http://localhost:3002"
 	@echo "  - Database: localhost:5432"
 	@echo ""
-	podman-compose -f podman-compose.yml -f podman-compose.build.yml up -d
+	IMAGE_TAG=local podman-compose -f podman-compose.yml up -d
 	@echo ""
 	@echo "Waiting for database to be ready..."
 	@sleep 15
@@ -560,7 +572,7 @@ build-run-local: setup-dev-env build-local
 	@echo "✅ All services started and database is ready!"
 	@echo ""
 	@echo "To also start pgAdmin for database management, run:"
-	@echo "  podman-compose -f podman-compose.yml --profile tools up -d pgadmin"
+	@echo "  IMAGE_TAG=local podman-compose -f podman-compose.yml --profile tools up -d pgadmin"
 	@echo "  Then access pgAdmin at: http://localhost:8080"
 	@echo ""
 	@echo "To view logs: make logs-local"

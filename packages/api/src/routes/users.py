@@ -107,6 +107,7 @@ async def get_users(
 
 
 @router.get('/profile', response_model=UserOut)
+@router.get('/profile/', response_model=UserOut)
 async def get_current_user_profile(
     session: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_authentication),
