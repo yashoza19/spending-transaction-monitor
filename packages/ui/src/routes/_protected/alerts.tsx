@@ -96,7 +96,7 @@ function AlertsPage() {
     try {
       setCreateError(null);
       await createRuleFromValidation.mutateAsync({
-        alert_rule: validationResult.alert_rule as unknown as Record<string, unknown>,
+        alert_rule: validationResult.alert_rule,
         sql_query: validationResult.sql_query,
         natural_language_query: pendingRule,
       });

@@ -88,7 +88,7 @@ export class AlertService {
   }
 
   static async createAlertRuleFromValidation(validationResult: {
-    alert_rule: AlertRuleData;
+    alert_rule: Record<string, unknown>;
     sql_query: string;
     natural_language_query: string;
   }): Promise<AlertRule> {

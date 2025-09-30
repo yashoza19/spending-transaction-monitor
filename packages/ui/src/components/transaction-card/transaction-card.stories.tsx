@@ -19,14 +19,18 @@ type Story = StoryObj<typeof meta>;
 
 const sampleTransaction: Transaction = {
   id: 'txn_1234567890',
+  user_id: 'u-test-001',
+  credit_card_num: '1234',
   amount: 45.67,
-  merchant: 'Coffee Shop Downtown',
-  category: 'dining',
-  status: 'completed',
-  time: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-  type: 'purchase',
   currency: 'USD',
   description: 'Morning coffee and pastry',
+  merchant_name: 'Coffee Shop Downtown',
+  merchant_category: 'dining',
+  transaction_date: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
+  transaction_type: 'PURCHASE',
+  status: 'APPROVED',
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
 };
 
 export const Default: Story = {
@@ -46,11 +50,11 @@ export const Pending: Story = {
   args: {
     transaction: {
       ...sampleTransaction,
-      status: 'pending',
+      status: 'PENDING',
       merchant: 'Online Store',
       category: 'shopping',
       amount: 129.99,
-      type: 'purchase',
+      transaction_type: 'PURCHASE',
     },
   },
 };
@@ -63,7 +67,7 @@ export const Failed: Story = {
       merchant: 'Gas Station',
       category: 'transport',
       amount: 65.43,
-      type: 'purchase',
+      transaction_type: 'PURCHASE',
     },
   },
 };
@@ -75,7 +79,7 @@ export const LargeAmount: Story = {
       merchant: 'Electronics Store',
       category: 'shopping',
       amount: 1299.99,
-      type: 'purchase',
+      transaction_type: 'PURCHASE',
     },
   },
 };
@@ -111,7 +115,7 @@ export const Travel: Story = {
       merchant: 'Airline Booking',
       category: 'travel',
       amount: 456.78,
-      type: 'purchase',
+      transaction_type: 'PURCHASE',
     },
   },
 };
@@ -124,22 +128,22 @@ export const Multiple: Story = {
         transaction={{
           ...sampleTransaction,
           id: 'txn_0987654321',
-          merchant: 'Uber Ride',
-          category: 'transport',
+          merchant_name: 'Uber Ride',
+          merchant_category: 'transport',
           amount: 23.45,
-          status: 'pending',
-          type: 'payment',
+          status: 'PENDING',
+          transaction_type: 'PAYMENT',
         }}
       />
       <TransactionCard
         transaction={{
           ...sampleTransaction,
           id: 'txn_1122334455',
-          merchant: 'Netflix Subscription',
-          category: 'entertainment',
+          merchant_name: 'Netflix Subscription',
+          merchant_category: 'entertainment',
           amount: 15.99,
-          status: 'completed',
-          type: 'subscription',
+          status: 'APPROVED',
+          transaction_type: 'PURCHASE',
         }}
         isSelected
       />

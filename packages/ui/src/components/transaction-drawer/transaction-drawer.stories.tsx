@@ -7,10 +7,10 @@ import type { Transaction } from '../../schemas/transaction';
 const mockTransaction: Transaction = {
   id: 'TXN-0042',
   amount: 1234.56,
-  merchant: 'Amazon Web Services',
-  status: 'completed',
-  time: '2024-01-15T14:30:00.000Z',
-  type: 'subscription',
+  merchant_name: 'Amazon Web Services',
+  status: 'APPROVED',
+  transaction_date: '2024-01-15T14:30:00.000Z',
+  transaction_type: 'PURCHASE',
   currency: 'USD',
   category: 'Cloud Services',
   description:
@@ -20,10 +20,10 @@ const mockTransaction: Transaction = {
 const flaggedTransaction: Transaction = {
   id: 'TXN-0043',
   amount: 2500.0,
-  merchant: 'Wire Transfer',
-  status: 'flagged',
-  time: '2024-01-15T09:15:00.000Z',
-  type: 'transfer',
+  merchant_name: 'Wire Transfer',
+  status: 'DECLINED',
+  transaction_date: '2024-01-15T09:15:00.000Z',
+  transaction_type: 'PAYMENT',
   currency: 'USD',
   category: 'Transfer',
   description:

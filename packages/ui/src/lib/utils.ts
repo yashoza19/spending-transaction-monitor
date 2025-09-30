@@ -40,5 +40,5 @@ export function formatTime(time: string): string {
  * Gets the appropriate CSS class for a transaction status badge
  */
 export function getStatusColor(status: Transaction['status']): string {
-  return statusColors[status]?.badge || '';
+  return statusColors[status.toLowerCase() as keyof typeof statusColors]?.badge || '';
 }

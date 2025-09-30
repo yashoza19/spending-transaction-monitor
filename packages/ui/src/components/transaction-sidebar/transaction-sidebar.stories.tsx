@@ -5,12 +5,12 @@ import type { Transaction } from '../../schemas/transaction';
 const mockTransaction: Transaction = {
   id: 'TXN-0042',
   amount: 1234.56,
-  merchant: 'Amazon Web Services',
-  status: 'completed',
-  time: '2024-01-15T14:30:00.000Z',
-  type: 'subscription',
+  merchant_name: 'Amazon Web Services',
+  status: 'APPROVED',
+  transaction_date: '2024-01-15T14:30:00.000Z',
+  transaction_type: 'PURCHASE',
   currency: 'USD',
-  category: 'Cloud Services',
+  merchant_category: 'Cloud Services',
   description:
     'Monthly subscription for AWS hosting services including EC2, S3, and CloudFront usage.',
 };
@@ -18,12 +18,12 @@ const mockTransaction: Transaction = {
 const flaggedTransaction: Transaction = {
   id: 'TXN-0043',
   amount: 2500.0,
-  merchant: 'Wire Transfer',
-  status: 'flagged',
-  time: '2024-01-15T09:15:00.000Z',
-  type: 'transfer',
+  merchant_name: 'Wire Transfer',
+  status: 'DECLINED',
+  transaction_date: '2024-01-15T09:15:00.000Z',
+  transaction_type: 'PAYMENT',
   currency: 'USD',
-  category: 'Transfer',
+  merchant_category: 'Transfer',
   description:
     'Large wire transfer flagged for manual review due to amount exceeding daily limit.',
 };
