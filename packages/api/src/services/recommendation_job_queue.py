@@ -140,6 +140,41 @@ class RecommendationJobQueue:
 
                     job.status = JobStatus.COMPLETED
                     job.result = result
+
+                    # Send WebSocket notification for single user jobs
+                    if (
+                        job.job_type == RecommendationJobType.SINGLE_USER
+                        and result.get('status') == 'success'
+                        and job.user_id
+                    ):
+                        try:
+                            from src.routes.websocket import (
+                                notify_recommendations_ready,
+                            )
+                            from src.services.background_recommendation_service import (
+                                background_recommendation_service,
+                            )
+
+                            # Get cached recommendations synchronously
+                            cached_recommendations = background_recommendation_service.get_cached_recommendations_sync(
+                                job.user_id
+                            )
+                            if cached_recommendations:
+                                # Schedule the notification in the main event loop
+                                asyncio.run_coroutine_threadsafe(
+                                    notify_recommendations_ready(
+                                        job.user_id, cached_recommendations
+                                    ),
+                                    asyncio.get_event_loop(),
+                                )
+                                logger.info(
+                                    f'Sent WebSocket notification for user {job.user_id}'
+                                )
+                        except Exception as e:
+                            logger.warning(
+                                f'Failed to send WebSocket notification for user {job.user_id}: {e}'
+                            )
+
                 except Exception as e:
                     job.status = JobStatus.FAILED
                     job.error = str(e)

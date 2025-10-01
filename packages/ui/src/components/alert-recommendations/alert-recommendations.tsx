@@ -82,8 +82,10 @@ export function AlertRecommendations({
   });
 
   // Check if we're showing placeholder recommendations
-  const isPlaceholder = recommendations?.is_placeholder || recommendations?.recommendation_type === 'placeholder';
-  
+  const isPlaceholder =
+    recommendations?.is_placeholder ||
+    recommendations?.recommendation_type === 'placeholder';
+
   // Set generating state when we have placeholder recommendations
   useEffect(() => {
     if (isPlaceholder && !isGeneratingPersonalized) {
@@ -119,7 +121,7 @@ export function AlertRecommendations({
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
           <Lightbulb className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-semibold text-foreground">Recommended Rules</h2>
+          <h2 className="text-xl font-semibold text-foreground">Recommended Alerts</h2>
         </div>
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
@@ -147,7 +149,9 @@ export function AlertRecommendations({
         <div className="flex items-center gap-3">
           <Lightbulb className="h-5 w-5 text-primary" />
           <div>
-            <h2 className="text-xl font-semibold text-foreground">Recommended Alerts</h2>
+            <h2 className="text-xl font-semibold text-foreground">
+              Recommended Alerts
+            </h2>
             <p className="text-sm text-muted-foreground">
               {recommendation_type === 'new_user'
                 ? 'Get started with these essential alerts based on your profile'
@@ -157,7 +161,7 @@ export function AlertRecommendations({
             </p>
           </div>
         </div>
-        
+
         {/* Status indicators */}
         <div className="flex items-center gap-2">
           {/* WebSocket connection status */}
@@ -167,14 +171,13 @@ export function AlertRecommendations({
             ) : (
               <WifiOff className="h-3 w-3 text-red-500" />
             )}
-            <span className={cn(
-              'text-xs',
-              isConnected ? 'text-green-600' : 'text-red-600'
-            )}>
+            <span
+              className={cn('text-xs', isConnected ? 'text-green-600' : 'text-red-600')}
+            >
               {isConnected ? 'Live' : 'Offline'}
             </span>
           </div>
-          
+
           {/* Generating personalized recommendations indicator */}
           {isGeneratingPersonalized && (
             <div className="flex items-center gap-1 text-xs text-blue-600">
@@ -187,7 +190,8 @@ export function AlertRecommendations({
 
       <div className="space-y-3">
         {recs.slice(0, 6).map((rec: AlertRecommendation, index: number) => {
-          const IconComponent = categoryIcons[rec.category as keyof typeof categoryIcons] || AlertTriangle;
+          const IconComponent =
+            categoryIcons[rec.category as keyof typeof categoryIcons] || AlertTriangle;
           const isExpanded = expandedCard === index;
           const isCreated = createdRules.has(rec.natural_language_query);
           const isCreating = creatingIndex === index;
@@ -198,7 +202,8 @@ export function AlertRecommendations({
               className={cn(
                 'p-4 transition-all duration-200 hover:shadow-md',
                 isExpanded && 'shadow-lg ring-2 ring-primary/20',
-                isCreated && 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800'
+                isCreated &&
+                  'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800',
               )}
             >
               <div className="space-y-3">
@@ -215,10 +220,7 @@ export function AlertRecommendations({
                         </h3>
                         <Badge
                           variant="secondary"
-                          className={cn(
-                            'text-xs',
-                            priorityColors[rec.priority]
-                          )}
+                          className={cn('text-xs', priorityColors[rec.priority])}
                         >
                           {rec.priority}
                         </Badge>
@@ -228,7 +230,7 @@ export function AlertRecommendations({
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 ml-4">
                     <Button
                       variant="ghost"
@@ -239,7 +241,7 @@ export function AlertRecommendations({
                       <ChevronRight
                         className={cn(
                           'h-4 w-4 transition-transform',
-                          isExpanded && 'rotate-90'
+                          isExpanded && 'rotate-90',
                         )}
                       />
                     </Button>
@@ -257,14 +259,12 @@ export function AlertRecommendations({
                         "{rec.natural_language_query}"
                       </p>
                     </div>
-                    
+
                     <div>
                       <h4 className="text-sm font-medium text-foreground mb-2">
                         Reasoning
                       </h4>
-                      <p className="text-sm text-muted-foreground">
-                        {rec.reasoning}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{rec.reasoning}</p>
                     </div>
 
                     {/* Action Button */}
@@ -274,7 +274,8 @@ export function AlertRecommendations({
                         disabled={isCreated || isCreating}
                         className={cn(
                           'min-w-[120px]',
-                          isCreated && 'bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900 dark:text-green-200'
+                          isCreated &&
+                            'bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900 dark:text-green-200',
                         )}
                       >
                         {isCreating ? (
