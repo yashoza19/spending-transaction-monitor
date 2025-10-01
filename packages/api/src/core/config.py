@@ -74,6 +74,16 @@ class Settings(BaseSettings):
     KEYCLOAK_REALM: str = 'spending-monitor'
     KEYCLOAK_CLIENT_ID: str = 'spending-monitor'
 
+    # SMTP settings
+    SMTP_HOST: str = 'localhost'
+    SMTP_PORT: int = 8025
+    SMTP_USERNAME: str = ''
+    SMTP_PASSWORD: str = ''
+    SMTP_FROM_EMAIL: str = 'noreply@localhost'
+    SMTP_REPLY_TO_EMAIL: str = 'noreply@localhost'
+    SMTP_USE_TLS: bool = True
+    SMTP_USE_SSL: bool = False
+
     def model_post_init(self, __context):
         """Set derived values based on environment"""
         # Auto-enable auth bypass in development if not explicitly set
