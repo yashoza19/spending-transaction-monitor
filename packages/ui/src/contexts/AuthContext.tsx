@@ -12,7 +12,7 @@ import {
 import { authConfig } from '../config/auth';
 import type { User, AuthContextType } from '../types/auth';
 import { DEV_USER } from '../constants/auth';
-import { apiClient } from '../services/apiClient';
+import { ApiClient } from '../services/apiClient';
 import { clearStoredLocation } from '../hooks/useLocation';
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -168,8 +168,7 @@ const OIDCAuthWrapper = React.memo(({ children }: { children: React.ReactNode })
 
       // Pass token to ApiClient
       if (oidcAuth.user.access_token) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (apiClient as any).constructor.setToken(oidcAuth.user.access_token);
+        ApiClient.setToken(oidcAuth.user.access_token);
       }
 
       if (import.meta.env.DEV) {
@@ -182,8 +181,7 @@ const OIDCAuthWrapper = React.memo(({ children }: { children: React.ReactNode })
       setUser(null);
       clearStoredLocation(); // Clear location data on logout (frontend cleanup)
       // Clear token from ApiClient
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (apiClient as any).constructor.setToken(null);
+      ApiClient.setToken(null);
       // Note: Location clearing also handled by backend on logout
     }
   }, [oidcAuth.user, oidcAuth.error]);

@@ -33,69 +33,126 @@ type WebSocketType = {
   new (url: string): WebSocketType;
   readonly readyState: number;
   readonly OPEN: number;
+  readonly CONNECTING: number;
+  readonly CLOSING: number;
+  readonly CLOSED: number;
   onopen: ((event: EventType) => void) | null;
   onmessage: ((event: MessageEventType) => void) | null;
   onclose: ((event: CloseEventType) => void) | null;
   onerror: ((event: EventType) => void) | null;
+  send(data: string): void;
   close(): void;
 };
 
 declare const WebSocket: WebSocketType;
 
-interface Recommendation {
+interface AlertRecommendation {
   title: string;
   description: string;
   natural_language_query: string;
   category: string;
-  priority: string;
+  priority: 'high' | 'medium' | 'low';
   reasoning: string;
+}
+
+interface AlertRecommendationsResponse {
+  user_id: string;
+  recommendation_type: 'new_user' | 'transaction_based' | 'placeholder';
+  recommendations: AlertRecommendation[];
+  generated_at: string;
+  is_placeholder?: boolean;
+  message?: string;
 }
 
 interface WebSocketMessage {
   type: string;
   user_id: string;
-  recommendations?: Recommendation[];
+  recommendations?: AlertRecommendationsResponse;
   timestamp?: string;
 }
 
 interface UseWebSocketOptions {
   userId: string;
   onMessage?: (message: WebSocketMessage) => void;
-  onRecommendationsReady?: (recommendations: Recommendation[]) => void;
+  onRecommendationsReady?: (recommendations: AlertRecommendationsResponse) => void;
 }
 
-export function useWebSocket({ userId, onMessage, onRecommendationsReady }: UseWebSocketOptions) {
+export function useWebSocket({
+  userId,
+  onMessage,
+  onRecommendationsReady,
+}: UseWebSocketOptions) {
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const ws = useRef<WebSocketType | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
+  const isConnecting = useRef(false);
+  const connectionCooldown = useRef(0);
+  const heartbeatInterval = useRef<number | null>(null);
+  const connectRef = useRef<(() => void) | undefined>(undefined);
+  const disconnectRef = useRef<(() => void) | undefined>(undefined);
 
   const connect = useCallback(() => {
-    if (ws.current?.readyState === WebSocket.OPEN) {
+    // Prevent multiple simultaneous connection attempts
+    if (isConnecting.current || ws.current?.readyState === WebSocket.CONNECTING) {
       return;
     }
 
+    // Implement connection cooldown to prevent rapid reconnections
+    const now = Date.now();
+    if (now < connectionCooldown.current) {
+      const remainingTime = connectionCooldown.current - now;
+      console.log(`Connection cooldown active, waiting ${remainingTime}ms`);
+      return;
+    }
+
+    // Clean up existing connection before creating new one
+    if (ws.current) {
+      if (ws.current.readyState === WebSocket.OPEN) {
+        ws.current.close();
+      }
+      ws.current = null;
+    }
+
+    isConnecting.current = true;
+    connectionCooldown.current = now + 2000; // 2 second cooldown
+
     try {
-      const wsUrl = `ws://localhost:8000/ws/recommendations/${userId}`;
+      // Use relative URL that works with Vite proxy
+      // In development, this will be proxied to the API server
+      // In production, this will be served from the same domain
+      const wsUrl = `ws://${window.location.host}/ws/recommendations/${userId}`;
       ws.current = new WebSocket(wsUrl);
 
       ws.current.onopen = () => {
-        console.log('WebSocket connected');
+        console.log('WebSocket connected successfully');
         setIsConnected(true);
         setError(null);
         reconnectAttempts.current = 0;
+        isConnecting.current = false;
+
+        // Start heartbeat to keep connection alive
+        heartbeatInterval.current = window.setInterval(() => {
+          if (ws.current?.readyState === WebSocket.OPEN) {
+            ws.current.send(JSON.stringify({ type: 'ping' }));
+          }
+        }, 30000); // Send ping every 30 seconds
       };
 
       ws.current.onmessage = (event) => {
         try {
           const message: WebSocketMessage = JSON.parse(event.data);
-          
-          if (message.type === 'recommendations_ready' && onRecommendationsReady && message.recommendations) {
+
+          if (
+            message.type === 'recommendations_ready' &&
+            onRecommendationsReady &&
+            message.recommendations
+          ) {
             onRecommendationsReady(message.recommendations);
           }
-          
+
           if (onMessage) {
             onMessage(message);
           }
@@ -104,17 +161,30 @@ export function useWebSocket({ userId, onMessage, onRecommendationsReady }: UseW
         }
       };
 
-      ws.current.onclose = () => {
-        console.log('WebSocket disconnected');
+      ws.current.onclose = (event) => {
+        console.log('WebSocket disconnected', {
+          code: event.code,
+          reason: event.reason,
+          wasClean: event.wasClean,
+        });
         setIsConnected(false);
-        
-        // Attempt to reconnect with exponential backoff
+        isConnecting.current = false;
+
+        // Clear heartbeat interval
+        if (heartbeatInterval.current) {
+          clearInterval(heartbeatInterval.current);
+          heartbeatInterval.current = null;
+        }
+
+        // Only attempt to reconnect if we haven't exceeded max attempts
         if (reconnectAttempts.current < maxReconnectAttempts) {
           const delay = Math.pow(2, reconnectAttempts.current) * 1000;
           reconnectAttempts.current++;
-          
+
           reconnectTimeoutRef.current = window.setTimeout(() => {
-            console.log(`Attempting to reconnect (${reconnectAttempts.current}/${maxReconnectAttempts})...`);
+            console.log(
+              `Attempting to reconnect (${reconnectAttempts.current}/${maxReconnectAttempts})...`,
+            );
             connect();
           }, delay);
         } else {
@@ -125,10 +195,12 @@ export function useWebSocket({ userId, onMessage, onRecommendationsReady }: UseW
       ws.current.onerror = (error) => {
         console.error('WebSocket error:', error);
         setError('WebSocket connection error');
+        isConnecting.current = false;
       };
     } catch (err) {
       console.error('Error creating WebSocket connection:', err);
       setError('Failed to create WebSocket connection');
+      isConnecting.current = false;
     }
   }, [userId, onMessage, onRecommendationsReady]);
 
@@ -136,24 +208,42 @@ export function useWebSocket({ userId, onMessage, onRecommendationsReady }: UseW
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
     }
-    
+
+    if (heartbeatInterval.current) {
+      clearInterval(heartbeatInterval.current);
+      heartbeatInterval.current = null;
+    }
+
     if (ws.current) {
       ws.current.close();
       ws.current = null;
     }
-    
+
     setIsConnected(false);
+    isConnecting.current = false;
   }, []);
+
+  // Update refs when functions change
+  connectRef.current = connect;
+  disconnectRef.current = disconnect;
 
   useEffect(() => {
     if (userId) {
-      connect();
+      // Add a small delay to prevent rapid reconnections
+      const timeoutId = setTimeout(() => {
+        connectRef.current?.();
+      }, 100);
+
+      return () => {
+        clearTimeout(timeoutId);
+        disconnectRef.current?.();
+      };
     }
 
     return () => {
-      disconnect();
+      disconnectRef.current?.();
     };
-  }, [userId, connect, disconnect]);
+  }, [userId]); // Intentionally exclude connect/disconnect to prevent reconnection loops
 
   return {
     isConnected,

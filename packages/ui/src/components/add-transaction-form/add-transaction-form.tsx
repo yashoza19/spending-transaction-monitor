@@ -109,7 +109,8 @@ export function AddTransactionDialog() {
               validators={{
                 onChange: CreateTransactionSchema.shape.date,
               }}
-              children={(field) => (
+            >
+              {(field) => (
                 <div className="space-y-2">
                   <Label htmlFor={field.name}>Date *</Label>
                   <Input
@@ -126,7 +127,7 @@ export function AddTransactionDialog() {
                   )}
                 </div>
               )}
-            />
+            </form.Field>
 
             {/* Amount */}
             <form.Field
@@ -134,7 +135,8 @@ export function AddTransactionDialog() {
               validators={{
                 onChange: CreateTransactionSchema.shape.amount,
               }}
-              children={(field) => (
+            >
+              {(field) => (
                 <div className="space-y-2">
                   <Label htmlFor={field.name}>Amount *</Label>
                   <Input
@@ -156,7 +158,7 @@ export function AddTransactionDialog() {
                   )}
                 </div>
               )}
-            />
+            </form.Field>
           </div>
 
           {/* Description */}
@@ -165,7 +167,8 @@ export function AddTransactionDialog() {
             validators={{
               onChange: CreateTransactionSchema.shape.description,
             }}
-            children={(field) => (
+          >
+            {(field) => (
               <div className="space-y-2">
                 <Label htmlFor={field.name}>Description *</Label>
                 <Input
@@ -182,7 +185,7 @@ export function AddTransactionDialog() {
                 )}
               </div>
             )}
-          />
+          </form.Field>
 
           <div className="grid grid-cols-2 gap-4">
             {/* Category */}
@@ -191,7 +194,8 @@ export function AddTransactionDialog() {
               validators={{
                 onChange: CreateTransactionSchema.shape.category,
               }}
-              children={(field) => (
+            >
+              {(field) => (
                 <div className="space-y-2">
                   <Label htmlFor={field.name}>Category *</Label>
                   <Select
@@ -216,7 +220,7 @@ export function AddTransactionDialog() {
                   )}
                 </div>
               )}
-            />
+            </form.Field>
 
             {/* Account */}
             <form.Field
@@ -224,7 +228,8 @@ export function AddTransactionDialog() {
               validators={{
                 onChange: CreateTransactionSchema.shape.account,
               }}
-              children={(field) => (
+            >
+              {(field) => (
                 <div className="space-y-2">
                   <Label htmlFor={field.name}>Account *</Label>
                   <Select
@@ -249,7 +254,7 @@ export function AddTransactionDialog() {
                   )}
                 </div>
               )}
-            />
+            </form.Field>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -259,7 +264,8 @@ export function AddTransactionDialog() {
               validators={{
                 onChange: CreateTransactionSchema.shape.type,
               }}
-              children={(field) => (
+            >
+              {(field) => (
                 <div className="space-y-2">
                   <Label htmlFor={field.name}>Type *</Label>
                   <Select
@@ -283,7 +289,7 @@ export function AddTransactionDialog() {
                   )}
                 </div>
               )}
-            />
+            </form.Field>
 
             {/* Merchant */}
             <form.Field
@@ -291,7 +297,8 @@ export function AddTransactionDialog() {
               validators={{
                 onChange: CreateTransactionSchema.shape.merchant,
               }}
-              children={(field) => (
+            >
+              {(field) => (
                 <div className="space-y-2">
                   <Label htmlFor={field.name}>Merchant</Label>
                   <Input
@@ -308,7 +315,7 @@ export function AddTransactionDialog() {
                   )}
                 </div>
               )}
-            />
+            </form.Field>
           </div>
 
           {/* Notes */}
@@ -317,7 +324,8 @@ export function AddTransactionDialog() {
             validators={{
               onChange: CreateTransactionSchema.shape.notes,
             }}
-            children={(field) => (
+          >
+            {(field) => (
               <div className="space-y-2">
                 <Label htmlFor={field.name}>Notes</Label>
                 <Textarea
@@ -335,7 +343,7 @@ export function AddTransactionDialog() {
                 )}
               </div>
             )}
-          />
+          </form.Field>
 
           <DialogFooter>
             <Button
@@ -346,9 +354,8 @@ export function AddTransactionDialog() {
             >
               Cancel
             </Button>
-            <form.Subscribe
-              selector={(state) => [state.canSubmit]}
-              children={([canSubmit]) => (
+            <form.Subscribe selector={(state) => [state.canSubmit]}>
+              {([canSubmit]) => (
                 <Button
                   type="submit"
                   disabled={!canSubmit || createTransactionMutation.isPending}
@@ -358,7 +365,7 @@ export function AddTransactionDialog() {
                     : 'Add Transaction'}
                 </Button>
               )}
-            />
+            </form.Subscribe>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -1,4 +1,4 @@
-import type { AlertRecommendation, AlertRecommendationsResponse } from '../schemas/recommendation';
+// Recommendation types imported where needed
 import { type ApiTransactionResponse, type ApiAlertRuleResponse } from './user';
 
 // Type definitions for API responses
@@ -702,16 +702,7 @@ import type {
   Alert,
   AlertRule,
 } from '../schemas/transaction';
-<<<<<<< HEAD
 import type { AlertRecommendation, AlertRecommendationsResponse } from '../schemas/recommendation';
-=======
-import type {
-  AlertRecommendation,
-  AlertRecommendationsResponse,
-} from '../schemas/recommendation';
->>>>>>> 9e9480d (fix: resolve AsyncMock runtime warnings in tests)
-=======
->>>>>>> b2c241e (fix: clean up alert recommendation code organization)
 import { type ApiTransactionResponse, type ApiAlertRuleResponse } from './user';
 
 // Type definitions for API responses

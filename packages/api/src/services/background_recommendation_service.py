@@ -259,6 +259,7 @@ class BackgroundRecommendationService:
         """Generate and cache recommendations for a specific user"""
 
         # Start performance tracking
+        logger.info(f'In generate_recommendations_for_user for user {user_id}')
         metrics = recommendation_metrics.start_tracking(user_id)
 
         owns_session = False
@@ -266,9 +267,11 @@ class BackgroundRecommendationService:
             owns_session = True
             session_ctx = SessionLocal()
             session = await session_ctx.__aenter__()
+            logger.info(f'Acquired session for user {user_id}')
 
         try:
             # Check if user exists
+            logger.info(f'Checking if user {user_id} exists')
             user_result = await session.execute(select(User).where(User.id == user_id))
             user = user_result.scalar_one_or_none()
             if not user:
@@ -279,6 +282,7 @@ class BackgroundRecommendationService:
                 return {'status': 'error', 'message': 'User not found'}
 
             # Generate recommendations using existing service
+            logger.info(f'Generating recommendations for user {user_id}')
             recommendations = await self.recommendation_service.get_recommendations(
                 user_id, session
             )
@@ -296,6 +300,7 @@ class BackgroundRecommendationService:
             try:
                 from src.routes.websocket import notify_recommendations_ready
 
+                logger.info(f'Sending WebSocket notification for user {user_id}')
                 await notify_recommendations_ready(user_id, recommendations)
             except Exception as e:
                 logger.warning(
