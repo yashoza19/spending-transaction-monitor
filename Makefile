@@ -23,30 +23,29 @@ ENV_FILE_PROD = .env.production
 ENV_FILE = $(ENV_FILE_DEV)  # Default to development for backwards compatibility
 
 # Helper function to generate helm parameters from environment variables
-define HELM_ENV_PARAMS
---set database.env.POSTGRES_DB="$$POSTGRES_DB" \
---set database.env.POSTGRES_USER="$$POSTGRES_USER" \
---set database.env.POSTGRES_PASSWORD="$$POSTGRES_PASSWORD" \
---set-string api.env.DATABASE_URL="$$DATABASE_URL" \
---set-string api.env.API_KEY="$$API_KEY" \
---set-string api.env.BASE_URL="$$BASE_URL" \
---set api.env.LLM_PROVIDER="$$LLM_PROVIDER" \
---set api.env.MODEL="$$MODEL" \
---set api.env.ENVIRONMENT="$$ENVIRONMENT" \
---set api.env.DEBUG="$$DEBUG" \
---set api.env.BYPASS_AUTH="$$BYPASS_AUTH" \
---set-string api.env.CORS_ALLOWED_ORIGINS="$$CORS_ALLOWED_ORIGINS" \
---set-string api.env.ALLOWED_ORIGINS="$$ALLOWED_ORIGINS" \
---set-string api.env.ALLOWED_HOSTS="$$ALLOWED_HOSTS" \
---set-string api.env.SMTP_HOST="$$SMTP_HOST" \
---set api.env.SMTP_PORT="$$SMTP_PORT" \
---set-string api.env.SMTP_FROM_EMAIL="$$SMTP_FROM_EMAIL" \
---set api.env.SMTP_USE_TLS="$$SMTP_USE_TLS" \
---set api.env.SMTP_USE_SSL="$$SMTP_USE_SSL" \
---set-string api.env.KEYCLOAK_URL="$$KEYCLOAK_URL" \
---set api.env.KEYCLOAK_REALM="$$KEYCLOAK_REALM" \
---set api.env.KEYCLOAK_CLIENT_ID="$$KEYCLOAK_CLIENT_ID" \
---set-string ui.env.VITE_API_BASE_URL="$$VITE_API_BASE_URL"
+define HELM_SECRET_PARAMS
+--set secrets.POSTGRES_DB="$$POSTGRES_DB" \
+--set secrets.POSTGRES_USER="$$POSTGRES_USER" \
+--set secrets.POSTGRES_PASSWORD="$$POSTGRES_PASSWORD" \
+--set secrets.DATABASE_URL="$$DATABASE_URL" \
+--set secrets.API_KEY="$$API_KEY" \
+--set secrets.BASE_URL="$$BASE_URL" \
+--set secrets.LLM_PROVIDER="$$LLM_PROVIDER" \
+--set secrets.MODEL="$$MODEL" \
+--set secrets.ENVIRONMENT="$$ENVIRONMENT" \
+--set secrets.DEBUG="$$DEBUG" \
+--set secrets.BYPASS_AUTH="$$BYPASS_AUTH" \
+--set secrets.CORS_ALLOWED_ORIGINS="$${CORS_ALLOWED_ORIGINS//,/\\,}" \
+--set secrets.ALLOWED_ORIGINS="$${ALLOWED_ORIGINS//,/\\,}" \
+--set secrets.SMTP_HOST="$$SMTP_HOST" \
+--set secrets.SMTP_PORT="$$SMTP_PORT" \
+--set secrets.SMTP_FROM_EMAIL="$$SMTP_FROM_EMAIL" \
+--set secrets.SMTP_USE_TLS="$$SMTP_USE_TLS" \
+--set secrets.SMTP_USE_SSL="$$SMTP_USE_SSL" \
+--set secrets.KEYCLOAK_URL="$$KEYCLOAK_URL" \
+--set secrets.KEYCLOAK_REALM="$$KEYCLOAK_REALM" \
+--set secrets.KEYCLOAK_CLIENT_ID="$$KEYCLOAK_CLIENT_ID" \
+--set secrets.VITE_API_BASE_URL="$$VITE_API_BASE_URL"
 endef
 
 # Default target when running 'make' without arguments
@@ -339,7 +338,7 @@ deploy: create-project check-env-prod
 		--set global.imageRegistry=$(REGISTRY_URL) \
 		--set global.imageRepository=$(REPOSITORY) \
 		--set global.imageTag=$(IMAGE_TAG) \
-		$(HELM_ENV_PARAMS)
+		$(HELM_SECRET_PARAMS)
 
 .PHONY: deploy-dev
 deploy-dev: create-project check-env-prod
@@ -356,7 +355,7 @@ deploy-dev: create-project check-env-prod
 		--set database.persistence.enabled=false \
 		--set api.replicas=1 \
 		--set ui.replicas=1 \
-		$(HELM_ENV_PARAMS)
+		$(HELM_SECRET_PARAMS)
 
 .PHONY: deploy-all
 deploy-all: build-all push-all deploy
@@ -410,7 +409,7 @@ helm-template: check-env-prod
 		--set global.imageRegistry=$(REGISTRY_URL) \
 		--set global.imageRepository=$(REPOSITORY) \
 		--set global.imageTag=$(IMAGE_TAG) \
-		$(HELM_ENV_PARAMS)
+		$(HELM_SECRET_PARAMS)
 
 .PHONY: helm-debug
 helm-debug: check-env-prod
@@ -423,7 +422,7 @@ helm-debug: check-env-prod
 		--set global.imageRegistry=$(REGISTRY_URL) \
 		--set global.imageRepository=$(REPOSITORY) \
 		--set global.imageTag=$(IMAGE_TAG) \
-		$(HELM_ENV_PARAMS) \
+		$(HELM_SECRET_PARAMS) \
 		--dry-run --debug
 
 # Clean up targets
