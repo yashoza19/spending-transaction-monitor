@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { Card } from '../../components/atoms/card/card';
 import { Button } from '../../components/atoms/button/button';
@@ -142,8 +142,6 @@ function AlertsPage() {
     });
   };
 
-  // Recommendation creation handled within component via its own hook
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="text-center mt-4 mb-8">
@@ -162,13 +160,7 @@ function AlertsPage() {
       </div>
 
       {/* Alert Recommendations */}
-      {/* Recommendations handled inside component via hooks; render container only */}
-      <AlertRecommendations
-        recommendations={currentRecommendations || null}
-        isLoading={isLoadingRecommendations}
-        onCreateRule={async () => Promise.resolve()}
-        userId={currentUserId}
-      />
+      <AlertRecommendations />
 
       {/* Validation Result Display */}
       {validationResult && (
