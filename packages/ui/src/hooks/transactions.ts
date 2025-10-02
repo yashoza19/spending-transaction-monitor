@@ -5,7 +5,6 @@ import {
   userService,
 } from '../services/api-transaction';
 import type { TransactionStats } from '../schemas/transaction';
-import type { AlertRecommendation } from '../schemas/recommendation';
 
 interface AlertRule {
   name: string;
@@ -121,28 +120,6 @@ export const useDeleteAlertRule = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['alertRules'] });
       queryClient.invalidateQueries({ queryKey: ['alerts'] });
-    },
-  });
-};
-
-// Alert recommendation hooks
-export const useAlertRecommendations = () => {
-  return useQuery({
-    queryKey: ['alertRecommendations'],
-    queryFn: () => alertService.getAlertRecommendations(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-};
-
-export const useCreateRuleFromRecommendation = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (recommendation: AlertRecommendation) =>
-      alertService.createRuleFromRecommendation(recommendation),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['alertRules'] });
-      queryClient.invalidateQueries({ queryKey: ['alertRecommendations'] });
     },
   });
 };
