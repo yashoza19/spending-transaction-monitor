@@ -30,14 +30,27 @@ spec:
             - -c
             - |
               echo "Waiting for database to be ready..."
-              until pg_isready -h {{ .Values.database.name }} -U {{ .Values.database.env.POSTGRES_USER }} -d {{ .Values.database.env.POSTGRES_DB }}; do
+              until pg_isready -h {{ .Values.database.name }} -U "$POSTGRES_USER" -d "$POSTGRES_DB"; do
                 echo "Database not ready, waiting..."
                 sleep 5
               done
               echo "Database is ready!"
           env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "spending-monitor.fullname" . }}-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "spending-monitor.fullname" . }}-secret
+                  key: POSTGRES_DB
             - name: PGPASSWORD
-              value: {{ .Values.database.env.POSTGRES_PASSWORD | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "spending-monitor.fullname" . }}-secret
+                  key: POSTGRES_PASSWORD
       containers:
         - name: migration
           securityContext:
@@ -49,13 +62,25 @@ spec:
             - name: POSTGRES_HOST
               value: {{ .Values.database.name | quote }}
             - name: POSTGRES_DB
-              value: {{ .Values.database.env.POSTGRES_DB | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "spending-monitor.fullname" . }}-secret
+                  key: POSTGRES_DB
             - name: POSTGRES_USER
-              value: {{ .Values.database.env.POSTGRES_USER | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "spending-monitor.fullname" . }}-secret
+                  key: POSTGRES_USER
             - name: POSTGRES_PASSWORD
-              value: {{ .Values.database.env.POSTGRES_PASSWORD | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "spending-monitor.fullname" . }}-secret
+                  key: POSTGRES_PASSWORD
             - name: DATABASE_URL
-              value: "postgresql+asyncpg://{{ .Values.database.env.POSTGRES_USER }}:{{ .Values.database.env.POSTGRES_PASSWORD }}@{{ .Values.database.name }}:5432/{{ .Values.database.env.POSTGRES_DB }}"
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "spending-monitor.fullname" . }}-secret
+                  key: DATABASE_URL
             # Python path for module imports
             - name: PYTHONPATH
               value: "/app/packages/db/src:/app/packages/api/src"
