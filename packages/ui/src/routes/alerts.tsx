@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { Card } from '../components/atoms/card/card';
 import { Button } from '../components/atoms/button/button';
@@ -23,13 +23,10 @@ import { Bell, Pause, Play, Trash2, AlertTriangle, X } from 'lucide-react';
 import {
   useAlertRules,
   useCreateAlertRuleFromValidation,
-  useCreateRuleFromRecommendation,
   useToggleAlertRule,
   useDeleteAlertRule,
   useValidateAlertRule,
-  useAlertRecommendations,
 } from '../hooks/transactions';
-import { useWebSocket } from '../hooks/useWebSocket';
 import { cn } from '../lib/utils';
 import { statusColors } from '../lib/colors';
 import type { CreateAlertRuleInput } from '../schemas/alert-rule';
@@ -44,13 +41,7 @@ export const Route = createFileRoute('/alerts')({
 
 function AlertsPage() {
   const { data: rules, isLoading } = useAlertRules();
-  const {
-    data: recommendations,
-    isLoading: isLoadingRecommendations,
-    refetch: refetchRecommendations,
-  } = useAlertRecommendations();
   const createRuleFromValidation = useCreateAlertRuleFromValidation();
-  const createRuleFromRecommendation = useCreateRuleFromRecommendation();
   const validateRule = useValidateAlertRule();
   const toggleRule = useToggleAlertRule();
   const deleteRule = useDeleteAlertRule();
@@ -66,26 +57,6 @@ function AlertsPage() {
     null,
   );
   const [pendingRule, setPendingRule] = useState<string | null>(null);
-  const [currentRecommendations, setCurrentRecommendations] = useState(recommendations);
-
-  // Update current recommendations when data changes
-  useEffect(() => {
-    setCurrentRecommendations(recommendations);
-  }, [recommendations]);
-
-  // Get current user ID from the recommendations data
-  const currentUserId = recommendations?.user_id || 'u-011';
-
-  // WebSocket integration for real-time recommendation updates
-  useWebSocket({
-    userId: currentUserId,
-    onRecommendationsReady: (newRecommendations) => {
-      console.log('Received new recommendations via WebSocket:', newRecommendations);
-      setCurrentRecommendations(newRecommendations);
-      // Refetch recommendations to ensure we have the latest data
-      refetchRecommendations();
-    },
-  });
 
   const handleValidateRule = async (data: CreateAlertRuleInput) => {
     try {
@@ -164,22 +135,6 @@ function AlertsPage() {
     });
   };
 
-  const handleCreateRuleFromRecommendation = async (recommendation: {
-    title: string;
-    description: string;
-    natural_language_query: string;
-    category: string;
-    priority: string;
-    reasoning: string;
-  }) => {
-    try {
-      await createRuleFromRecommendation.mutateAsync(recommendation);
-    } catch (error) {
-      console.error('Failed to create rule from recommendation:', error);
-      throw error;
-    }
-  };
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="text-center mt-4 mb-8">
@@ -198,17 +153,7 @@ function AlertsPage() {
       </div>
 
       {/* Alert Recommendations */}
-      <AlertRecommendations
-        recommendations={currentRecommendations || null}
-        isLoading={isLoadingRecommendations}
-        onCreateRule={handleCreateRuleFromRecommendation}
-        userId={currentUserId}
-        onRecommendationsUpdate={(newRecommendations) => {
-          setCurrentRecommendations(newRecommendations);
-          // Optionally refetch to ensure data consistency
-          refetchRecommendations();
-        }}
-      />
+      <AlertRecommendations />
 
       {/* Validation Result Display */}
       {validationResult && (
