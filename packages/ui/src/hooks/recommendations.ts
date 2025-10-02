@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { realAlertService as alertService } from '../services/api-transaction';
+import { alertRecommendationService } from '../services/api-recommendations';
 import type { AlertRecommendation } from '../schemas/recommendation';
 
 // Custom hook for recommendations with local state management
@@ -14,7 +14,7 @@ export const useRecommendations = () => {
     refetch,
   } = useQuery({
     queryKey: ['alertRecommendations'],
-    queryFn: () => alertService.getAlertRecommendations(),
+    queryFn: () => alertRecommendationService.getAlertRecommendations(),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -47,7 +47,7 @@ export const useCreateRuleFromRecommendation = () => {
 
   return useMutation({
     mutationFn: (recommendation: AlertRecommendation) =>
-      alertService.createRuleFromRecommendation(recommendation),
+      alertRecommendationService.createRuleFromRecommendation(recommendation),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['alertRules'] });
       queryClient.invalidateQueries({ queryKey: ['alertRecommendations'] });
