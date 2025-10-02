@@ -38,7 +38,16 @@ class TestAlertRuleService:
     @pytest.fixture
     def alert_rule_service(self):
         """Create an AlertRuleService instance for testing"""
-        return AlertRuleService()
+        service = AlertRuleService()
+        # Mock the notification service to prevent async warnings
+        service.notification_service = AsyncMock()
+        # Configure notification service mock return value
+        mock_notification = MagicMock()
+        mock_notification.status = 'sent'
+        mock_notification.sent_at = datetime.now()
+        mock_notification.delivered_at = datetime.now()
+        service.notification_service.notify.return_value = mock_notification
+        return service
 
     @pytest.fixture
     def mock_session(self):
@@ -49,6 +58,14 @@ class TestAlertRuleService:
         session.execute = AsyncMock()
         session.commit = AsyncMock()
         session.refresh = AsyncMock()
+
+        # Configure the execute result to avoid AsyncMock warnings
+        mock_result = MagicMock()
+        mock_scalars = MagicMock()
+        mock_scalars.all.return_value = []  # Empty list for existing rules
+        mock_result.scalars.return_value = mock_scalars
+        session.execute.return_value = mock_result
+
         return session
 
     @pytest.fixture

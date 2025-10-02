@@ -564,10 +564,7 @@ build-run-local: setup-dev-env build-local
 	@echo ""
 	@echo "Waiting for database to be ready..."
 	@sleep 15
-	@echo "Running database migrations..."
-	@pnpm db:upgrade || (echo "❌ Database upgrade failed. Check if database is running." && exit 1)
-	@echo "Seeding database with test data..."
-	@pnpm db:seed || (echo "❌ Database seeding failed. Check migration status." && exit 1)
+	@echo "Database migrations and seeding are handled automatically by the migrations container..."
 	@echo ""
 	@echo "✅ All services started and database is ready!"
 	@echo ""

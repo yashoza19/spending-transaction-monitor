@@ -8,6 +8,7 @@ import {
   AlertRuleValidation,
   type ValidationResult,
 } from '../components/alert-rule-validation/alert-rule-validation';
+import { AlertRecommendations } from '../components/alert-recommendations/alert-recommendations';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { LocationPermissionAlert } from '../components/location/LocationPermissionAlert';
 import {
@@ -150,6 +151,9 @@ function AlertsPage() {
           isSubmitting={validateRule.isPending}
         />
       </div>
+
+      {/* Alert Recommendations */}
+      <AlertRecommendations />
 
       {/* Validation Result Display */}
       {validationResult && (
