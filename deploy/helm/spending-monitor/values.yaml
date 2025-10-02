@@ -6,6 +6,36 @@ global:
   imagePullPolicy: IfNotPresent
   storageClass: ""
 
+# Secrets configuration - these values should be overridden with actual secrets
+secrets:
+  # Database secrets
+  POSTGRES_DB: "spending-monitor"
+  POSTGRES_USER: "user"
+  POSTGRES_PASSWORD: "changeme"
+
+  # API secrets
+  DATABASE_URL: "postgresql+asyncpg://user:changeme@spending-monitor-db:5432/spending-monitor"
+  API_KEY: "changeme"
+  BASE_URL: "http://localhost:8000"
+  LLM_PROVIDER: "openai"
+  MODEL: "llama-3-3-70b-instruct-w8a8"
+  ENVIRONMENT: "production"
+  DEBUG: "false"
+  BYPASS_AUTH: "false"
+  CORS_ALLOWED_ORIGINS: '["*"]'
+  ALLOWED_ORIGINS: '["*"]'
+  SMTP_HOST: "changeme"
+  SMTP_PORT: "587"
+  SMTP_FROM_EMAIL: "changeme"
+  SMTP_USE_TLS: "true"
+  SMTP_USE_SSL: "false"
+  KEYCLOAK_URL: "changeme"
+  KEYCLOAK_REALM: "changeme"
+  KEYCLOAK_CLIENT_ID: "changeme"
+
+  # UI secrets
+  VITE_API_BASE_URL: "http://localhost:8000"
+
 # Database configuration
 database:
   enabled: true
@@ -20,10 +50,6 @@ database:
     enabled: true
     size: 10Gi
     accessMode: ReadWriteOnce
-  env:
-    POSTGRES_DB: spending-monitor
-    POSTGRES_USER: user
-    POSTGRES_PASSWORD: password
   resources:
     requests:
       memory: "256Mi"
@@ -61,15 +87,6 @@ api:
     type: ClusterIP
     port: 8000
   replicas: 1
-  env:
-    DATABASE_URL: postgresql+asyncpg://user:password@spending-monitor-db:5432/spending-monitor
-    ENVIRONMENT: production
-    NODE_ENV: production
-    DEBUG: "false"
-    ALLOWED_HOSTS: '["*"]'
-    APP_NAME: spending-monitor
-    LLM_PROVIDER: openai
-    MODEL: "llama-3-3-70b-instruct-w8a8"
   resources:
     requests:
       memory: "512Mi"
@@ -94,7 +111,6 @@ ui:
     type: ClusterIP
     port: 8080
   replicas: 1
-  env: {}
   resources:
     requests:
       memory: "128Mi"
