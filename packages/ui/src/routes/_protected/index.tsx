@@ -1,13 +1,12 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { TransactionChart } from '../components/transaction-chart/transaction-chart';
-import { TransactionList } from '../components/transaction-list/transaction-list';
-import { AlertsPanel } from '../components/alerts-panel/alerts-panel';
-import { StatsList } from '../components/stats-list/stats-list';
-import { Card } from '../components/atoms/card/card';
-import { Button } from '../components/atoms/button/button';
-import { useHealth } from '../hooks/health';
-import { useTransactionStats } from '../hooks/transactions';
-import { ProtectedRoute } from '../components/auth/ProtectedRoute';
+import { TransactionChart } from '../../components/transaction-chart/transaction-chart';
+import { TransactionList } from '../../components/transaction-list/transaction-list';
+import { AlertsPanel } from '../../components/alerts-panel/alerts-panel';
+import { StatsList } from '../../components/stats-list/stats-list';
+import { Card } from '../../components/atoms/card/card';
+import { Button } from '../../components/atoms/button/button';
+import { useHealth } from '../../hooks/health';
+import { useTransactionStats } from '../../hooks/transactions';
 import {
   Server,
   Database,
@@ -16,16 +15,12 @@ import {
   TrendingDown,
   AlertTriangle,
 } from 'lucide-react';
-import { cn } from '../lib/utils';
-import type { Alert } from '../schemas/transaction';
-import type { Stat } from '../components/stats-list/stats-list';
+import { cn } from '../../lib/utils';
+import type { Alert } from '../../schemas/transaction';
+import type { Stat } from '../../components/stats-list/stats-list';
 
-export const Route = createFileRoute('/')({
-  component: () => (
-    <ProtectedRoute>
-      <Index />
-    </ProtectedRoute>
-  ),
+export const Route = createFileRoute('/_protected/')({
+  component: Index,
 });
 
 function Index() {

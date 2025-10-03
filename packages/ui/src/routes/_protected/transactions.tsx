@@ -1,11 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { TransactionList } from '../components/transaction-list/transaction-list';
-import { TransactionSidebar } from '../components/transaction-sidebar/transaction-sidebar';
-import { TransactionDrawer } from '../components/transaction-drawer/transaction-drawer';
-import { Card } from '../components/atoms/card/card';
-import { Button } from '../components/atoms/button/button';
-import { StatsList } from '../components/stats-list/stats-list';
-import { ProtectedRoute } from '../components/auth/ProtectedRoute';
+import { TransactionList } from '../../components/transaction-list/transaction-list';
+import { TransactionSidebar } from '../../components/transaction-sidebar/transaction-sidebar';
+import { TransactionDrawer } from '../../components/transaction-drawer/transaction-drawer';
+import { Card } from '../../components/atoms/card/card';
+import { Button } from '../../components/atoms/button/button';
+import { StatsList } from '../../components/stats-list/stats-list';
 import {
   Search,
   Filter,
@@ -16,17 +15,13 @@ import {
   ArrowUpDown,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useTransactionStats } from '../hooks/transactions';
-import { cn } from '../lib/utils';
-import type { Transaction } from '../schemas/transaction';
-import type { Stat } from '../components/stats-list/stats-list';
+import { useTransactionStats } from '../../hooks/transactions';
+import { cn } from '../../lib/utils';
+import type { Transaction } from '../../schemas/transaction';
+import type { Stat } from '../../components/stats-list/stats-list';
 
-export const Route = createFileRoute('/transactions')({
-  component: () => (
-    <ProtectedRoute>
-      <TransactionsPage />
-    </ProtectedRoute>
-  ),
+export const Route = createFileRoute('/_protected/transactions')({
+  component: TransactionsPage,
 });
 
 function TransactionsPage() {

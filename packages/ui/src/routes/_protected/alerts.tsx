@@ -1,16 +1,15 @@
 import { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { Card } from '../components/atoms/card/card';
-import { Button } from '../components/atoms/button/button';
-import { Badge } from '../components/atoms/badge/badge';
-import { AlertRuleForm } from '../components/alert-rule-form/alert-rule-form';
+import { Card } from '../../components/atoms/card/card';
+import { Button } from '../../components/atoms/button/button';
+import { Badge } from '../../components/atoms/badge/badge';
+import { AlertRuleForm } from '../../components/alert-rule-form/alert-rule-form';
 import {
   AlertRuleValidation,
   type ValidationResult,
-} from '../components/alert-rule-validation/alert-rule-validation';
-import { AlertRecommendations } from '../components/alert-recommendations/alert-recommendations';
-import { ProtectedRoute } from '../components/auth/ProtectedRoute';
-import { LocationPermissionAlert } from '../components/location/LocationPermissionAlert';
+} from '../../components/alert-rule-validation/alert-rule-validation';
+import { AlertRecommendations } from '../../components/alert-recommendations/alert-recommendations';
+import { LocationPermissionAlert } from '../../components/location/LocationPermissionAlert';
 import {
   Dialog,
   DialogContent,
@@ -18,7 +17,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../components/atoms/dialog/dialog';
+} from '../../components/atoms/dialog/dialog';
 import { Bell, Pause, Play, Trash2, AlertTriangle, X } from 'lucide-react';
 import {
   useAlertRules,
@@ -26,17 +25,13 @@ import {
   useToggleAlertRule,
   useDeleteAlertRule,
   useValidateAlertRule,
-} from '../hooks/transactions';
-import { cn } from '../lib/utils';
-import { statusColors } from '../lib/colors';
-import type { CreateAlertRuleInput } from '../schemas/alert-rule';
+} from '../../hooks/transactions';
+import { cn } from '../../lib/utils';
+import { statusColors } from '../../lib/colors';
+import type { CreateAlertRuleInput } from '../../schemas/alert-rule';
 
-export const Route = createFileRoute('/alerts')({
-  component: () => (
-    <ProtectedRoute>
-      <AlertsPage />
-    </ProtectedRoute>
-  ),
+export const Route = createFileRoute('/_protected/alerts')({
+  component: AlertsPage,
 });
 
 function AlertsPage() {
