@@ -41,21 +41,21 @@ export function DashboardHeader({ className, onMenuClick }: DashboardHeaderProps
 
             <nav className="hidden md:flex items-center gap-6">
               <Link
-                to="/"
+                to="/_protected/"
                 className="text-foreground hover:text-primary transition-colors text-sm font-medium"
                 activeProps={{ className: 'text-primary' }}
               >
                 Dashboard
               </Link>
               <Link
-                to="/transactions"
+                to="/_protected/transactions"
                 className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium"
                 activeProps={{ className: 'text-primary' }}
               >
                 Transactions
               </Link>
               <Link
-                to="/alerts"
+                to="/_protected/alerts"
                 className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium"
                 activeProps={{ className: 'text-primary' }}
               >
