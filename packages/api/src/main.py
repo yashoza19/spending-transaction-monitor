@@ -10,10 +10,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .core.config import settings
 from .routes import alerts as alerts_routes
-from .routes import health
+from .routes import health, websocket
 from .routes import transactions as transactions_routes
 from .routes import users as users_routes
 from .services.alert_job_queue import alert_job_queue
+from .services.llm_thread_pool import llm_thread_pool
 from .services.recommendation_job_queue import recommendation_job_queue
 from .services.recommendation_scheduler import recommendation_scheduler
 
@@ -27,15 +28,16 @@ async def lifespan(app: FastAPI):
     """Application lifespan manager"""
     logger.info('Starting up application...')
 
-    # Start the alert job queue
-    await alert_job_queue.start()
-    logger.info('Alert monitoring service started')
+    # The recommendation generation will be triggered on-demand via API calls
+    await llm_thread_pool.start()
+    logger.info('LLM thread pool started')
 
-    # Start the recommendation job queue
     await recommendation_job_queue.start()
     logger.info('Recommendation service started')
 
-    # Start the recommendation scheduler
+    await alert_job_queue.start()
+    logger.info('Alert monitoring service started')
+
     await recommendation_scheduler.start()
     logger.info('Recommendation scheduler started')
 
@@ -49,6 +51,9 @@ async def lifespan(app: FastAPI):
 
     await recommendation_scheduler.stop()
     logger.info('Recommendation scheduler stopped')
+
+    await llm_thread_pool.stop()
+    logger.info('LLM thread pool stopped')
     logger.info('Shutting down application...')
 
 
@@ -68,13 +73,14 @@ app.add_middleware(
     allow_headers=['*'],
 )
 
-# Include routers
+# Include all routers
 app.include_router(health.router, prefix='/health', tags=['health'])
 app.include_router(users_routes.router, prefix='/api/users', tags=['users'])
 app.include_router(
     transactions_routes.router, prefix='/api/transactions', tags=['transactions']
 )
 app.include_router(alerts_routes.router, prefix='/api/alerts', tags=['alerts'])
+app.include_router(websocket.router, tags=['websocket'])
 
 
 @app.get('/')

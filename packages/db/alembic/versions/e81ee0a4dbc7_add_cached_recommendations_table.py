@@ -1,7 +1,7 @@
 """add_cached_recommendations_table
 
 Revision ID: e81ee0a4dbc7
-Revises: 5b7ab65a1fe2
+Revises: e35d4db01ac2
 Create Date: 2025-09-24 13:31:10.574194
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'e81ee0a4dbc7'
-down_revision = '5b7ab65a1fe2'
+down_revision = 'e35d4db01ac2'
 branch_labels = None
 depends_on = None
 

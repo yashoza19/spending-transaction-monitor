@@ -14,6 +14,7 @@ from src.services.alerts.agents.alert_recommender import (
     recommend_alerts_for_new_user,
 )
 from src.services.alerts.agents.rule_similarity_checker import check_rule_similarity
+from src.services.llm_thread_pool import llm_thread_pool
 from src.services.transaction_service import TransactionService
 from src.services.user_service import UserService
 
@@ -44,19 +45,30 @@ class AlertRecommendationService:
 
         if not has_transactions:
             # First-time user recommendations based on demographics
-            result = recommend_alerts_for_new_user(user_profile)
+            # Run in thread pool since it involves LLM operations
+            result = await llm_thread_pool.run_in_thread(
+                recommend_alerts_for_new_user, user_profile
+            )
         else:
             # Existing user recommendations based on transaction history
             transaction_data = await self._get_transaction_data(user_id, session)
-            transaction_analysis = analyze_transaction_patterns(transaction_data)
+
+            # Run CPU-intensive analysis in thread pool
+            transaction_analysis = await llm_thread_pool.run_in_thread(
+                analyze_transaction_patterns, transaction_data
+            )
 
             # Get similar users data for collaborative filtering
             similar_users_data = await self._get_similar_users_data(
                 user_profile, session
             )
 
-            result = recommend_alerts_for_existing_user(
-                user_profile, transaction_analysis, similar_users_data
+            # Run recommendation generation in thread pool
+            result = await llm_thread_pool.run_in_thread(
+                recommend_alerts_for_existing_user,
+                user_profile,
+                transaction_analysis,
+                similar_users_data,
             )
 
         # Filter out recommendations similar to existing rules
@@ -202,7 +214,10 @@ class AlertRecommendationService:
             users_data.append(user_data)
 
         # Find similar users using the collaborative filtering algorithm
-        similar_users = find_similar_users(user_profile, users_data)
+        # Run in thread pool since it involves LLM operations
+        similar_users = await llm_thread_pool.run_in_thread(
+            find_similar_users, user_profile, users_data
+        )
         return similar_users
 
     async def _filter_existing_rules(

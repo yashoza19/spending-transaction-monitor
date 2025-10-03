@@ -9,36 +9,17 @@ from typing import Literal
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-def get_env_file_path() -> str:
-    """
-    Determine which .env file to use.
-    Priority:
-    1. ../../../../.env (root directory) - preferred
-    2. ../../.env (packages/api directory) - fallback
-    """
-    # Get the directory where this config file is located (packages/api/src/core/)
-    current_dir = Path(__file__).parent
-
-    # Check root directory first
-    # packages/api/src/core/ -> packages/api/src/ -> packages/api/ -> packages/ -> root/
-    root_env = current_dir.parent.parent.parent.parent / '.env'
-    if root_env.exists():
-        return str(root_env)
-
-    # Fallback to packages/api/.env
-    api_env = current_dir.parent.parent / '.env'
-    if api_env.exists():
-        return str(api_env)
-
-    # Default to root directory path (even if it doesn't exist yet)
-    return str(root_env)
-
-
 class Settings(BaseSettings):
     """Application settings"""
 
+    # Define env file priority order (first one found is used)
     model_config = SettingsConfigDict(
-        env_file=get_env_file_path(),
+        env_file=[
+            Path(__file__).resolve().parents[4]
+            / '.env.development',  # root/.env.development
+            Path(__file__).resolve().parents[4] / '.env',  # root/.env
+            Path(__file__).resolve().parents[2] / '.env',  # packages/api/.env
+        ],
         extra='ignore',  # Allow extra environment variables without validation errors
     )
 
@@ -86,6 +67,7 @@ class Settings(BaseSettings):
 
     def model_post_init(self, __context):
         """Set derived values based on environment"""
+
         # Auto-enable auth bypass in development if not explicitly set
         if (
             self.ENVIRONMENT == 'development'
@@ -99,4 +81,5 @@ class Settings(BaseSettings):
             self.DEBUG = self.ENVIRONMENT == 'development'
 
 
+# Create a global settings instance
 settings = Settings()
