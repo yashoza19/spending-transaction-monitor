@@ -9,75 +9,78 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TransactionsRouteImport } from './routes/transactions'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as AlertsRouteImport } from './routes/alerts'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProtectedRouteRouteImport } from './routes/_protected/route'
+import { Route as ProtectedIndexRouteImport } from './routes/_protected/index'
+import { Route as ProtectedTransactionsRouteImport } from './routes/_protected/transactions'
+import { Route as ProtectedAlertsRouteImport } from './routes/_protected/alerts'
 
-const TransactionsRoute = TransactionsRouteImport.update({
-  id: '/transactions',
-  path: '/transactions',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AlertsRoute = AlertsRouteImport.update({
-  id: '/alerts',
-  path: '/alerts',
+const ProtectedRouteRoute = ProtectedRouteRouteImport.update({
+  id: '/_protected',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
+const ProtectedIndexRoute = ProtectedIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => ProtectedRouteRoute,
+} as any)
+const ProtectedTransactionsRoute = ProtectedTransactionsRouteImport.update({
+  id: '/transactions',
+  path: '/transactions',
+  getParentRoute: () => ProtectedRouteRoute,
+} as any)
+const ProtectedAlertsRoute = ProtectedAlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
+  getParentRoute: () => ProtectedRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/alerts': typeof AlertsRoute
   '/login': typeof LoginRoute
-  '/transactions': typeof TransactionsRoute
+  '/alerts': typeof ProtectedAlertsRoute
+  '/transactions': typeof ProtectedTransactionsRoute
+  '/': typeof ProtectedIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/alerts': typeof AlertsRoute
   '/login': typeof LoginRoute
-  '/transactions': typeof TransactionsRoute
+  '/alerts': typeof ProtectedAlertsRoute
+  '/transactions': typeof ProtectedTransactionsRoute
+  '/': typeof ProtectedIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/alerts': typeof AlertsRoute
+  '/_protected': typeof ProtectedRouteRouteWithChildren
   '/login': typeof LoginRoute
-  '/transactions': typeof TransactionsRoute
+  '/_protected/alerts': typeof ProtectedAlertsRoute
+  '/_protected/transactions': typeof ProtectedTransactionsRoute
+  '/_protected/': typeof ProtectedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/alerts' | '/login' | '/transactions'
+  fullPaths: '/login' | '/alerts' | '/transactions' | '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/alerts' | '/login' | '/transactions'
-  id: '__root__' | '/' | '/alerts' | '/login' | '/transactions'
+  to: '/login' | '/alerts' | '/transactions' | '/'
+  id:
+    | '__root__'
+    | '/_protected'
+    | '/login'
+    | '/_protected/alerts'
+    | '/_protected/transactions'
+    | '/_protected/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AlertsRoute: typeof AlertsRoute
+  ProtectedRouteRoute: typeof ProtectedRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
-  TransactionsRoute: typeof TransactionsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/transactions': {
-      id: '/transactions'
-      path: '/transactions'
-      fullPath: '/transactions'
-      preLoaderRoute: typeof TransactionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -85,28 +88,56 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/alerts': {
-      id: '/alerts'
-      path: '/alerts'
-      fullPath: '/alerts'
-      preLoaderRoute: typeof AlertsRouteImport
+    '/_protected': {
+      id: '/_protected'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof ProtectedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
+    '/_protected/': {
+      id: '/_protected/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof ProtectedIndexRouteImport
+      parentRoute: typeof ProtectedRouteRoute
+    }
+    '/_protected/transactions': {
+      id: '/_protected/transactions'
+      path: '/transactions'
+      fullPath: '/transactions'
+      preLoaderRoute: typeof ProtectedTransactionsRouteImport
+      parentRoute: typeof ProtectedRouteRoute
+    }
+    '/_protected/alerts': {
+      id: '/_protected/alerts'
+      path: '/alerts'
+      fullPath: '/alerts'
+      preLoaderRoute: typeof ProtectedAlertsRouteImport
+      parentRoute: typeof ProtectedRouteRoute
     }
   }
 }
 
+interface ProtectedRouteRouteChildren {
+  ProtectedAlertsRoute: typeof ProtectedAlertsRoute
+  ProtectedTransactionsRoute: typeof ProtectedTransactionsRoute
+  ProtectedIndexRoute: typeof ProtectedIndexRoute
+}
+
+const ProtectedRouteRouteChildren: ProtectedRouteRouteChildren = {
+  ProtectedAlertsRoute: ProtectedAlertsRoute,
+  ProtectedTransactionsRoute: ProtectedTransactionsRoute,
+  ProtectedIndexRoute: ProtectedIndexRoute,
+}
+
+const ProtectedRouteRouteWithChildren = ProtectedRouteRoute._addFileChildren(
+  ProtectedRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  AlertsRoute: AlertsRoute,
+  ProtectedRouteRoute: ProtectedRouteRouteWithChildren,
   LoginRoute: LoginRoute,
-  TransactionsRoute: TransactionsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
