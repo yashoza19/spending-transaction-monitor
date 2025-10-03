@@ -263,7 +263,7 @@ function Index() {
                   Recent Transactions
                 </h3>
                 <Button variant="outline" size="sm" asChild>
-                  <Link to="/_protected/transactions">View All</Link>
+                  <Link to="/transactions">View All</Link>
                 </Button>
               </div>
               <TransactionList itemsPerPage={5} />
