@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev:vite": "vite",
-    "dev:storybook": "storybook dev -p 6006 --no-open",
+    "dev:vite": "npx dotenv-cli -e ../../.env -- vite",
+    "dev:storybook": "npx dotenv-cli -e ../../.env -- storybook dev -p 6006 --no-open",
     "dev": "concurrently \"npm run dev:vite\" \"npm run dev:storybook\"",
     "build:vite": "tsc && vite build",
     "build:storybook": "storybook build",

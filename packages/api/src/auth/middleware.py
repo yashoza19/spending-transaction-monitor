@@ -190,6 +190,7 @@ class KeycloakJWTBearer:
             logger.info(f'   Subject: {claims.get("sub", "N/A")}')
             logger.info(f'   Username: {claims.get("preferred_username", "N/A")}')
             logger.info(f'   Email: {claims.get("email", "N/A")}')
+            logger.info(f'   All claims keys: {list(claims.keys())}')
 
             return claims
 
@@ -341,6 +342,10 @@ async def get_current_user(
     keycloak_id = claims.get('sub')
     user_email = claims.get('email')
     user_id = keycloak_id  # Default fallback
+
+    logger.info(
+        f'🔍 User lookup debug - Keycloak ID: {keycloak_id}, Email: {user_email}'
+    )
 
     if session and User and keycloak_id:
         try:

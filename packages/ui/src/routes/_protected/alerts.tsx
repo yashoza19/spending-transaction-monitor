@@ -7,11 +7,10 @@ import { AlertRuleForm } from '../../components/alert-rule-form/alert-rule-form'
 import {
   AlertRuleValidation,
   type ValidationResult,
-} from '../components/alert-rule-validation/alert-rule-validation';
-import { AlertRecommendations } from '../components/alert-recommendations/alert-recommendations';
-import { AlertRuleCard } from '../components/alert-rule-card/alert-rule-card';
-import { ProtectedRoute } from '../components/auth/ProtectedRoute';
-import { LocationPermissionAlert } from '../components/location/LocationPermissionAlert';
+} from '../../components/alert-rule-validation/alert-rule-validation';
+import { AlertRecommendations } from '../../components/alert-recommendations/alert-recommendations';
+import { AlertRuleCard } from '../../components/alert-rule-card/alert-rule-card';
+import { LocationPermissionAlert } from '../../components/location/LocationPermissionAlert';
 import {
   Dialog,
   DialogContent,
@@ -19,7 +18,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../components/atoms/dialog/dialog';
+} from '../../components/atoms/dialog/dialog';
 import { Bell, AlertTriangle, X } from 'lucide-react';
 import {
   useAlertRules,
@@ -39,8 +38,7 @@ export const Route = createFileRoute('/_protected/alerts')({
 
 function AlertsPage() {
   const { data: rules, isLoading } = useAlertRules();
-  const { data: recommendations, isLoading: isLoadingRecommendations } =
-    useRecommendations();
+  const { data: recommendations } = useRecommendations();
   const createRuleFromValidation = useCreateAlertRuleFromValidation();
   const validateRule = useValidateAlertRule();
   const toggleRule = useToggleAlertRule();
