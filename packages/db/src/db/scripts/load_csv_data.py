@@ -55,6 +55,12 @@ async def clear_existing_data(session) -> None:
         card_count = result.rowcount
         print(f"   Deleted {card_count} credit cards")
         
+        # Clear cached recommendations (has foreign keys to users)
+        print("   Clearing cached recommendations...")
+        result = await session.execute(text("DELETE FROM cached_recommendations"))
+        cached_count = result.rowcount
+        print(f"   Deleted {cached_count} cached recommendations")
+        
         # Clear users last (parent table)
         print("   Clearing users...")
         result = await session.execute(delete(User))

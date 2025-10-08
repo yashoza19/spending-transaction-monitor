@@ -522,8 +522,8 @@ stop-local:
 
 .PHONY: build-local
 build-local:
-	@echo "Building local Podman images with 'local' tag..."
-	podman-compose -f podman-compose.yml -f podman-compose.build.yml build
+	@echo "Building local Podman images with 'local' tag (no cache)..."
+	podman-compose -f podman-compose.yml -f podman-compose.build.yml build --no-cache
 	@echo "Tagging built images as 'local'..."
 	podman tag $(UI_IMAGE) $(UI_IMAGE_LOCAL) || true
 	podman tag $(API_IMAGE) $(API_IMAGE_LOCAL) || true

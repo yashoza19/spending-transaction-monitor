@@ -25,6 +25,51 @@ services:
     networks:
       - spending-monitor
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    platform: linux/amd64
+    container_name: spending-monitor-keycloak
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_HTTP_PORT=8080
+      - KC_HOSTNAME_STRICT=false
+      - KC_HOSTNAME_STRICT_HTTPS=false
+      - KC_HTTP_ENABLED=true
+      - KC_HEALTH_ENABLED=true
+    ports:
+      - "8080:8080"
+    command: start-dev
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /realms/master HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - spending-monitor
+
+  keycloak-setup:
+    image: python:3.12-slim
+    platform: linux/amd64
+    container_name: spending-monitor-keycloak-setup
+    working_dir: /app
+    environment:
+      - KEYCLOAK_URL=http://keycloak:8080
+    volumes:
+      - ./packages/auth/scripts:/app/scripts
+    command: >
+      sh -c "
+        pip install --quiet requests &&
+        python /app/scripts/setup_keycloak.py
+      "
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    networks:
+      - spending-monitor
+    restart: "no"
+
   migrations:
     image: quay.io/rh-ai-quickstart/spending-monitor-db:${IMAGE_TAG:-latest}
     platform: linux/amd64
@@ -52,11 +97,11 @@ services:
 
   # FastAPI Backend
   api:
-    image: quay.io/rh-ai-quickstart/spending-monitor-api:${IMAGE_TAG:-latest}
+    # image: quay.io/rh-ai-quickstart/spending-monitor-api:${IMAGE_TAG:-latest}
     platform: linux/amd64
-    # build:
-    #   context: .
-    #   dockerfile: packages/api/Containerfile
+    build:
+      context: .
+      dockerfile: packages/api/Containerfile
     container_name: spending-monitor-api
     env_file:
       - .env.development
@@ -70,7 +115,7 @@ services:
       - SMTP_USE_TLS=${SMTP_USE_TLS:-false}
       - SMTP_USE_SSL=${SMTP_USE_SSL:-false}
       - ENVIRONMENT=${ENVIRONMENT:-development}
-      - BYPASS_AUTH=${BYPASS_AUTH:-true}
+      - BYPASS_AUTH=${BYPASS_AUTH:-false}
       - API_PORT=${API_PORT:-8000}
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080}
@@ -80,13 +125,15 @@ services:
       - MODEL=${MODEL:-gpt-3.5-turbo}
       - LLM_PROVIDER=${LLM_PROVIDER:-openai}
       - NODE_ENV=${NODE_ENV:-development}
-      - KEYCLOAK_URL=${KEYCLOAK_URL:-http://localhost:8080}
+      - KEYCLOAK_URL=${KEYCLOAK_URL:-http://keycloak:8080}
       - KEYCLOAK_REALM=${KEYCLOAK_REALM:-spending-monitor}
       - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID:-spending-monitor}
     ports:
       - "8000:8000"
     depends_on:
       postgres:
+        condition: service_healthy
+      keycloak:
         condition: service_healthy
       smtp4dev:
         condition: service_started
@@ -95,11 +142,11 @@ services:
 
   # React Frontend
   ui:
-    image: quay.io/rh-ai-quickstart/spending-monitor-ui:${IMAGE_TAG:-latest}
+    # image: quay.io/rh-ai-quickstart/spending-monitor-ui:${IMAGE_TAG:-latest}
     platform: linux/amd64
-    # build:
-    #   context: .
-    #   dockerfile: packages/ui/Containerfile
+    build:
+      context: .
+      dockerfile: packages/ui/Containerfile
     container_name: spending-monitor-ui
     env_file:
       - .env.development
@@ -109,8 +156,8 @@ services:
       - spending-monitor
     environment:
       - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api}
-      - VITE_BYPASS_AUTH=${VITE_BYPASS_AUTH:-${BYPASS_AUTH:-false}}
-      - VITE_ENVIRONMENT=${ENVIRONMENT:-development}
+      - VITE_BYPASS_AUTH=${VITE_BYPASS_AUTH:-false}
+      - VITE_ENVIRONMENT=${VITE_ENVIRONMENT:-staging}
       - VITE_KEYCLOAK_URL=${KEYCLOAK_URL:-http://localhost:8080}/realms/spending-monitor
       - VITE_KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID:-spending-monitor}
 

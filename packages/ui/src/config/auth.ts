@@ -18,7 +18,7 @@ export interface AuthConfig {
 const environment = (import.meta.env.VITE_ENVIRONMENT ||
   'development') as AuthConfig['environment'];
 
-// Bypass detection - auto-enable in development unless explicitly disabled
+// Bypass detection - only enable if explicitly set to true
 const bypassAuth = import.meta.env.VITE_BYPASS_AUTH === 'true';
 
 export const authConfig: AuthConfig = {

@@ -3,6 +3,7 @@
 Create a new Keycloak realm for spending-monitor with OIDC discovery enabled
 """
 
+import os
 import time
 import requests
 from typing import Optional
@@ -10,7 +11,7 @@ from typing import Optional
 
 class KeycloakRealmCreator:
     def __init__(self):
-        self.base_url = "http://localhost:8080"
+        self.base_url = os.getenv("KEYCLOAK_URL", "http://localhost:8080")
         self.admin_username = "admin"
         self.admin_password = "admin"
         self.master_realm = "master"
@@ -57,7 +58,7 @@ class KeycloakRealmCreator:
                 "enabled": True,
                 "displayName": "Spending Monitor",
                 "displayNameHtml": '<div class="kc-logo-text"><span>Spending Monitor</span></div>',
-                "attributes": {"frontendUrl": "http://localhost:5173"},
+                "attributes": {"frontendUrl": "http://localhost:8080"},
             }
 
             response = requests.post(url, json=realm_data, headers=headers, timeout=10)
@@ -102,11 +103,11 @@ class KeycloakRealmCreator:
                 "enabled": True,
                 "publicClient": True,
                 "standardFlowEnabled": True,
-                "directAccessGrantsEnabled": False,
+                "directAccessGrantsEnabled": True,
                 "serviceAccountsEnabled": False,
                 "implicitFlowEnabled": False,
-                "redirectUris": ["http://localhost:5173/*"],
-                "webOrigins": ["http://localhost:5173"],
+                "redirectUris": ["http://localhost:3000/*"],
+                "webOrigins": ["http://localhost:3000"],
                 "attributes": {"pkce.code.challenge.method": "S256"},
             }
 
@@ -373,7 +374,7 @@ class KeycloakRealmCreator:
         self.log("   • admin@example.com / admin123 (admin role)")
         self.log("🔗 Next steps:")
         self.log("   1. Update API config to use realm: spending-monitor")
-        self.log("   2. Test the UI: http://localhost:5173/auth-demo")
+        self.log("   2. Test the UI: http://localhost:3000")
         self.log("   3. Run E2E tests: make test-e2e")
 
         return True
