@@ -1,15 +1,27 @@
 #!/usr/bin/env python3
 """
-Create a new Keycloak realm for spending-monitor with OIDC discovery enabled
+Consolidated Keycloak Setup Script
+Creates Keycloak realm and populates it with users from database (if available)
+or falls back to hardcoded test users.
 """
 
+import asyncio
 import os
 import time
+from typing import Optional, List, Dict, Any
 import requests
-from typing import Optional
+
+# Optional database imports
+try:
+    from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy import text
+    DB_AVAILABLE = True
+except ImportError:
+    DB_AVAILABLE = False
 
 
-class KeycloakRealmCreator:
+class KeycloakSetup:
     def __init__(self):
         self.base_url = os.getenv("KEYCLOAK_URL", "http://localhost:8080")
         self.admin_username = "admin"
@@ -18,6 +30,27 @@ class KeycloakRealmCreator:
         self.app_realm = "spending-monitor"
         self.client_id = "spending-monitor"
         self.access_token: Optional[str] = None
+        
+        # Try to set up database connection if available
+        self.db_available = False
+        self.engine = None
+        self.async_session = None
+        
+        if DB_AVAILABLE:
+            try:
+                database_url = os.getenv(
+                    'DATABASE_URL', 
+                    'postgresql+asyncpg://user:password@localhost:5432/spending-monitor'
+                )
+                self.engine = create_async_engine(database_url, echo=False)
+                self.async_session = sessionmaker(
+                    self.engine, class_=AsyncSession, expire_on_commit=False
+                )
+                self.db_available = True
+                self.log("📦 Database connection available - will sync users from DB")
+            except Exception as e:
+                self.log(f"ℹ️  Database not available: {e}")
+                self.log("   Will use hardcoded test users instead")
 
     def log(self, message: str, level: str = "INFO"):
         """Print formatted log message"""
@@ -187,10 +220,10 @@ class KeycloakRealmCreator:
             self.log(f"❌ Error creating roles: {e}", "ERROR")
             return False
 
-    def create_test_user(
+    def create_keycloak_user(
         self, username: str, email: str, password: str, roles: list
     ) -> bool:
-        """Create or verify a test user with specified roles in the realm"""
+        """Create or verify a user with specified roles in the realm"""
         try:
             headers = {"Authorization": f"Bearer {self.access_token}"}
 
@@ -203,7 +236,6 @@ class KeycloakRealmCreator:
             if response.status_code == 200 and len(response.json()) > 0:
                 existing_user = response.json()[0]
                 user_id = existing_user["id"]
-                self.log(f"ℹ️  User '{username}' already exists")
             else:
                 # Create new user
                 user_data = {
@@ -222,21 +254,17 @@ class KeycloakRealmCreator:
 
                 if response.status_code == 201:
                     user_id = response.headers.get("Location", "").split("/")[-1]
-                    self.log(f"✅ User '{username}' created successfully")
                 elif response.status_code == 409:
                     # User exists, get the user ID
                     response = requests.get(check_url, headers=headers, timeout=10)
                     if response.status_code == 200 and len(response.json()) > 0:
                         user_id = response.json()[0]["id"]
-                        self.log(f"ℹ️  User '{username}' already exists")
                     else:
-                        self.log("❌ Failed to get existing user ID")
                         return False
                 else:
-                    self.log(f"❌ Failed to create user: {response.status_code}")
                     return False
 
-            # Verify/assign roles if we have a user ID
+            # Assign roles if we have a user ID
             if user_id:
                 for role_name in roles:
                     # Get role data
@@ -266,25 +294,104 @@ class KeycloakRealmCreator:
                                 timeout=10,
                             )
 
-                            if assign_response.status_code == 204:
-                                self.log(
-                                    f"✅ Role '{role_name}' assigned to user '{username}'"
-                                )
-                            else:
-                                self.log(
-                                    f"⚠️  Failed to assign role '{role_name}' to user '{username}'"
-                                )
-                        else:
-                            self.log(
-                                f"ℹ️  User '{username}' already has role '{role_name}'"
-                            )
-                    else:
-                        self.log(f"⚠️  Could not find role '{role_name}'")
-
             return True
 
         except Exception as e:
-            self.log(f"❌ Error creating/updating test user: {e}", "ERROR")
+            self.log(f"⚠️  Error creating user {username}: {e}")
+            return False
+
+    async def get_users_from_database(self) -> List[Dict[str, Any]]:
+        """Fetch active users from the database"""
+        if not self.db_available or not self.async_session:
+            return []
+        
+        try:
+            async with self.async_session() as session:
+                query = text("""
+                    SELECT id, email, first_name, last_name, is_active
+                    FROM users
+                    WHERE is_active = true
+                    ORDER BY id
+                """)
+                result = await session.execute(query)
+                rows = result.fetchall()
+                
+                users = []
+                for row in rows:
+                    # Create username from email (part before @)
+                    username = row.email.split('@')[0] if row.email else f"user{row.id}"
+                    users.append({
+                        "username": username,
+                        "email": row.email,
+                        "password": "password123",  # Default password for all users
+                        "roles": ["user"]
+                    })
+                
+                return users
+                
+        except Exception as e:
+            self.log(f"⚠️  Could not fetch users from database: {e}")
+            return []
+
+    def get_fallback_users(self) -> List[Dict[str, Any]]:
+        """Get hardcoded test users as fallback"""
+        return [
+            {
+                "username": "testuser",
+                "email": "testuser@example.com",
+                "password": "password123",
+                "roles": ["user"],
+            },
+            {
+                "username": "user1",
+                "email": "user1@example.com",
+                "password": "password123",
+                "roles": ["user"],
+            },
+        ]
+
+    async def create_users_async(self) -> bool:
+        """Create users from database or fallback list"""
+        try:
+            # Try to get users from database
+            users = await self.get_users_from_database()
+            
+            if not users:
+                self.log("ℹ️  No database users found, using hardcoded test users")
+                users = self.get_fallback_users()
+            else:
+                self.log(f"📖 Found {len(users)} active users in database")
+            
+            # Create users in Keycloak
+            self.log(f"👥 Creating {len(users)} users in Keycloak...")
+            success_count = 0
+            
+            for i, user_data in enumerate(users, 1):
+                self.log(f"   [{i}/{len(users)}] Creating {user_data['email']}...")
+                if self.create_keycloak_user(**user_data):
+                    success_count += 1
+                    self.log(f"✅ User '{user_data['email']}' created successfully")
+            
+            self.log(f"✅ Successfully created/updated {success_count}/{len(users)} users")
+            
+            # Always create an admin user
+            self.log("👤 Creating admin user...")
+            admin_created = self.create_keycloak_user(
+                username="admin",
+                email="admin@example.com",
+                password="password123",
+                roles=["user", "admin"]
+            )
+            
+            if admin_created:
+                self.log("✅ User 'admin@example.com' created successfully")
+                self.log("✅ Admin role assigned to admin@example.com")
+                self.log("✅ Admin user created successfully")
+            
+            return True
+            
+        except Exception as e:
+            self.log(f"❌ Error creating users: {e}", "ERROR")
             return False
 
     def test_oidc_config(self) -> bool:
@@ -316,10 +423,10 @@ class KeycloakRealmCreator:
             self.log(f"❌ Error testing OIDC config: {e}", "ERROR")
             return False
 
-    def run_setup(self) -> bool:
-        """Run the complete realm setup"""
-        self.log("🚀 Starting Keycloak realm setup for spending-monitor")
-        self.log("=" * 50)
+    async def run_setup_async(self) -> bool:
+        """Run the complete realm setup (async version)"""
+        self.log("🚀 Starting Keycloak setup with database users")
+        self.log("=" * 60)
 
         # Step 1: Get admin token
         if not self.get_admin_token():
@@ -337,52 +444,41 @@ class KeycloakRealmCreator:
         if not self.create_roles():
             return False
 
-        # Step 5: Create test users
-        test_users = [
-            {
-                "username": "testuser",
-                "email": "testuser@example.com",
-                "password": "password123",
-                "roles": ["user"],
-            },
-            {
-                "username": "adminuser",
-                "email": "admin@example.com",
-                "password": "admin123",
-                "roles": ["user", "admin"],
-            },
-        ]
-
-        for user_data in test_users:
-            if not self.create_test_user(**user_data):
-                self.log(
-                    f"⚠️  Failed to create user {user_data['username']}, continuing..."
-                )
+        # Step 5: Create users (from DB or fallback)
+        if not await self.create_users_async():
+            return False
 
         # Step 6: Test OIDC configuration
-        self.log("⏳ Waiting a moment for changes to take effect...")
+        self.log("⏳ Waiting for Keycloak to process changes...")
         time.sleep(3)
 
         if not self.test_oidc_config():
             self.log("❌ OIDC configuration test failed")
             return False
 
-        self.log("=" * 50)
-        self.log("🎉 Realm setup completed successfully!")
-        self.log("📋 Test users created:")
-        self.log("   • testuser@example.com / password123 (user role)")
-        self.log("   • admin@example.com / admin123 (admin role)")
+        self.log("=" * 60)
+        self.log("🎉 Keycloak setup completed successfully!")
+        self.log("📋 Summary:")
+        self.log(f"   • Realm: {self.app_realm}")
+        if self.db_available:
+            self.log("   • Users synced from database")
+        self.log("   • Admin user: admin@example.com / password123")
+        self.log("   • Test users: user1@example.com (and others) / password123")
         self.log("🔗 Next steps:")
-        self.log("   1. Update API config to use realm: spending-monitor")
+        self.log("   1. Set BYPASS_AUTH=false in your environment")
         self.log("   2. Test the UI: http://localhost:3000")
-        self.log("   3. Run E2E tests: make test-e2e")
+        self.log("   3. Login with created users")
 
         return True
+
+    def run_setup(self) -> bool:
+        """Run the complete realm setup (sync wrapper)"""
+        return asyncio.run(self.run_setup_async())
 
 
 def main():
     """Main entry point"""
-    creator = KeycloakRealmCreator()
+    creator = KeycloakSetup()
 
     try:
         success = creator.run_setup()
@@ -393,6 +489,8 @@ def main():
         return 1
     except Exception as e:
         print(f"\n❌ Unexpected error: {e}")
+        import traceback
+        traceback.print_exc()
         return 1
 
 
