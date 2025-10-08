@@ -10,7 +10,8 @@ window.ENV = {
   API_BASE_URL: '${VITE_API_BASE_URL:-/api}',
   ENVIRONMENT: '${VITE_ENVIRONMENT:-production}',
   KEYCLOAK_URL: '${VITE_KEYCLOAK_URL:-http://localhost:8080/realms/spending-monitor}',
-  KEYCLOAK_CLIENT_ID: '${VITE_KEYCLOAK_CLIENT_ID:-spending-monitor}'
+  KEYCLOAK_CLIENT_ID: '${VITE_KEYCLOAK_CLIENT_ID:-spending-monitor}',
+  DEV: true  // Force dev logging for debugging
 };
 
 console.log('🔧 Runtime config loaded:', window.ENV);

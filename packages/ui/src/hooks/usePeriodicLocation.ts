@@ -40,7 +40,6 @@ export function usePeriodicLocation(): UsePeriodicLocationResult {
   // Send location to backend with retry logic
   const sendLocationToBackend = useCallback(async (location: UserLocation) => {
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
       'X-User-Latitude': location.latitude.toString(),
       'X-User-Longitude': location.longitude.toString(),
     };
@@ -49,7 +48,10 @@ export function usePeriodicLocation(): UsePeriodicLocationResult {
       headers['X-User-Location-Accuracy'] = location.accuracy.toString();
     }
 
-    const response = await fetch('/api/users/location', {
+    // Use apiClient to automatically include Authorization header
+    const { apiClient } = await import('../services/apiClient');
+    
+    await apiClient.fetch('/api/users/location', {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -59,13 +61,6 @@ export function usePeriodicLocation(): UsePeriodicLocationResult {
         last_app_location_accuracy: location.accuracy || null,
       }),
     });
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Location update failed: ${error}`);
-    }
-
-    return response.json();
   }, []);
 
   // Update location with retry logic

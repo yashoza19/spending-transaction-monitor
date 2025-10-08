@@ -56,21 +56,23 @@ services:
     working_dir: /app
     environment:
       - KEYCLOAK_URL=http://keycloak:8080
+      - DATABASE_URL=postgresql+asyncpg://user:password@postgres:5432/spending-monitor
     volumes:
       - ./packages/auth/scripts:/app/scripts
     command: >
       sh -c "
         echo 'Waiting for Keycloak to be ready...' &&
         for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
-          nc -z keycloak 8080 && break || echo 'Waiting...' && sleep 10;
+          python3 -c 'import socket; s=socket.socket(); s.settimeout(1); s.connect((\"keycloak\", 8080)); s.close()' 2>/dev/null && break || (echo 'Waiting...' && sleep 10);
         done &&
-        echo 'Keycloak port is open, waiting 10 more seconds for full startup...' &&
-        sleep 10 &&
-        pip install --quiet requests &&
+        echo 'Keycloak port is open, waiting 20 more seconds for full startup...' &&
+        sleep 20 &&
+        pip install --quiet requests sqlalchemy asyncpg psycopg2-binary &&
         python /app/scripts/setup_keycloak.py
       "
     depends_on:
       - keycloak
+      - postgres
     networks:
       - spending-monitor
     restart: "no"
@@ -163,8 +165,9 @@ services:
       - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api}
       - VITE_BYPASS_AUTH=${VITE_BYPASS_AUTH:-false}
       - VITE_ENVIRONMENT=${VITE_ENVIRONMENT:-staging}
-      - VITE_KEYCLOAK_URL=${KEYCLOAK_URL:-http://localhost:8080}/realms/spending-monitor
-      - VITE_KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID:-spending-monitor}
+      # UI needs public Keycloak URL (accessible from browser), not internal container hostname
+      - VITE_KEYCLOAK_URL=${VITE_KEYCLOAK_URL:-http://localhost:8080/realms/spending-monitor}
+      - VITE_KEYCLOAK_CLIENT_ID=${VITE_KEYCLOAK_CLIENT_ID:-spending-monitor}
 
   # Nginx reverse proxy to serve UI and proxy API
   nginx:
