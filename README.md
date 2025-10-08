@@ -303,14 +303,27 @@ pnpm start:prod
 ### Container Development
 
 ```bash
-# Development mode (auth bypass) - fastest iteration
+# With Keycloak authentication (default)
 pnpm dev:containers:auth
 
-# Production mode (Keycloak) - test real auth flow
-pnpm dev:containers:prod
+# With auth bypass (no login required) - fastest iteration
+pnpm dev:containers:noauth
 
-# Standard container startup
+# Standard container startup (without rebuild)
 pnpm dev:containers
+```
+
+**Or using Make directly:**
+
+```bash
+# Build and run with Keycloak authentication (default)
+make build-run-local
+
+# Build and run with auth bypass (no authentication)
+make build-run-local-noauth
+
+# Run without rebuilding
+make run-local
 ```
 
 ### Utility Commands

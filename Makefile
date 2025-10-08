@@ -558,26 +558,61 @@ reset-local: setup-dev-env
 	@echo ""
 	@echo "✅ Local environment has been reset and database is ready!"
 
+# Clean UI images to ensure fresh build with correct environment variables
+.PHONY: clean-ui-images
+clean-ui-images:
+	@echo "🗑️  Removing old UI images to ensure clean build..."
+	@podman rmi -f spending-monitor-ui:local localhost/spending-transaction-monitor_ui:latest 2>/dev/null || true
+	@echo "✅ UI images removed"
+
+# Build and run locally with Keycloak authentication (default/production mode)
 .PHONY: build-run-local
-build-run-local: setup-dev-env
-	@echo "Building local images (excluding auth - using remote for Keycloak setup)..."
-	podman-compose -f podman-compose.yml -f podman-compose.build.yml build --no-cache migrations api ui
+build-run-local: setup-dev-env clean-ui-images
+	@echo "🔨 Building with Keycloak authentication..."
+	@echo "   BYPASS_AUTH=false"
+	@echo "   VITE_BYPASS_AUTH=false"
+	@echo "   VITE_ENVIRONMENT=staging"
+	BYPASS_AUTH=false VITE_BYPASS_AUTH=false VITE_ENVIRONMENT=staging \
+		podman-compose -f podman-compose.yml -f podman-compose.build.yml build --no-cache migrations api ui
 	@echo "Tagging built images as 'local'..."
 	podman tag $(UI_IMAGE) $(UI_IMAGE_LOCAL) || true
 	podman tag $(API_IMAGE) $(API_IMAGE_LOCAL) || true
 	podman tag $(DB_IMAGE) $(DB_IMAGE_LOCAL) || true
-	@echo "Starting all services locally with freshly built images (tagged as 'local')..."
-	@echo "This will start: PostgreSQL, API, UI, nginx proxy, SMTP server, and Keycloak"
-	@echo "Services will be available at:"
-	@echo "  - Frontend: http://localhost:3000"
-	@echo "  - API (proxied): http://localhost:3000/api/*"
-	@echo "  - API (direct): http://localhost:8000"
-	@echo "  - API Docs: http://localhost:8000/docs"
-	@echo "  - SMTP Web UI: http://localhost:3002"
-	@echo "  - Keycloak: http://localhost:8080"
-	@echo "  - Database: localhost:5432"
 	@echo ""
-	IMAGE_TAG=local podman-compose -f podman-compose.yml up -d
+	@echo "✅ Starting with Keycloak authentication..."
+	@echo "   - Login required (testuser/password or adminuser/password)"
+	@echo "   - Keycloak authentication enabled"
+	@echo "   - Frontend: http://localhost:3000"
+	@echo "   - API (proxied): http://localhost:3000/api/*"
+	@echo "   - API (direct): http://localhost:8000"
+	@echo "   - Keycloak: http://localhost:8080"
+	@echo ""
+	IMAGE_TAG=local BYPASS_AUTH=false VITE_BYPASS_AUTH=false VITE_ENVIRONMENT=staging \
+		podman-compose -f podman-compose.yml up -d
+
+# Build and run locally with auth bypass (no authentication)
+.PHONY: build-run-local-noauth
+build-run-local-noauth: setup-dev-env clean-ui-images
+	@echo "🔨 Building with auth bypass (no authentication)..."
+	@echo "   BYPASS_AUTH=true"
+	@echo "   VITE_BYPASS_AUTH=true"
+	@echo "   VITE_ENVIRONMENT=development"
+	BYPASS_AUTH=true VITE_BYPASS_AUTH=true VITE_ENVIRONMENT=development \
+		podman-compose -f podman-compose.yml -f podman-compose.build.yml build --no-cache migrations api ui
+	@echo "Tagging built images as 'local'..."
+	podman tag $(UI_IMAGE) $(UI_IMAGE_LOCAL) || true
+	podman tag $(API_IMAGE) $(API_IMAGE_LOCAL) || true
+	podman tag $(DB_IMAGE) $(DB_IMAGE_LOCAL) || true
+	@echo ""
+	@echo "✅ Starting with auth bypass..."
+	@echo "   - No login required"
+	@echo "   - Yellow dev banner will be visible"
+	@echo "   - Frontend: http://localhost:3000"
+	@echo "   - API (proxied): http://localhost:3000/api/*"
+	@echo "   - API (direct): http://localhost:8000"
+	@echo ""
+	IMAGE_TAG=local BYPASS_AUTH=true VITE_BYPASS_AUTH=true VITE_ENVIRONMENT=development \
+		podman-compose -f podman-compose.yml up -d
 	@echo ""
 	@echo "Waiting for services to be ready..."
 	@sleep 30
