@@ -49,12 +49,16 @@ class Settings(BaseSettings):
     MODEL: str = 'gpt-3.5-turbo'
     LLAMASTACK_BASE_URL: str = 'http://localhost:8321'
     LLAMASTACK_MODEL: str = 'meta-llama/Llama-3.2-3B-Instruct'
-    
+
     # Embedding settings (for category normalization)
     EMBEDDING_PROVIDER: str = 'local'  # local (sentence-transformers), openai, llamastack, ollama (deprecated)
-    EMBEDDING_MODEL: str = 'all-minilm'  # Maps to sentence-transformers/all-MiniLM-L6-v2
+    EMBEDDING_MODEL: str = (
+        'all-minilm'  # Maps to sentence-transformers/all-MiniLM-L6-v2
+    )
     EMBEDDING_DIMENSIONS: int = 384
-    OLLAMA_BASE_URL: str = 'http://localhost:11434'  # Only needed if using ollama provider
+    OLLAMA_BASE_URL: str = (
+        'http://localhost:11434'  # Only needed if using ollama provider
+    )
     # Note: Using same LLAMASTACK_BASE_URL as LLM settings above
 
     # Keycloak settings

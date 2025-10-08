@@ -1,10 +1,12 @@
 # category_normalizer.py
 
 import logging
+
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.models import MerchantCategorySynonym, MerchantCategoryEmbedding
+from db.models import MerchantCategorySynonym
+
 from .embedding_service import embedding_service
 
 logger = logging.getLogger(__name__)
@@ -29,10 +31,10 @@ class CategoryNormalizer:
         try:
             emb = await embedding_service.get_embedding(raw_lower)
             logger.info(f"Generated {len(emb)}-dim embedding for '{raw_lower}'")
-            
+
             # Use direct string formatting for pgvector compatibility (same as populate script)
             vector_str = '[' + ','.join(map(str, emb)) + ']'
-            
+
             result = await session.execute(
                 text(f"""
                     SELECT category
