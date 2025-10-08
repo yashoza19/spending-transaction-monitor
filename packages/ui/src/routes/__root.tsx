@@ -1,8 +1,5 @@
 import { createRootRoute, Outlet, useRouter } from '@tanstack/react-router';
 import { TanStackRouterDevtools } from '@tanstack/router-devtools';
-import { DashboardHeader } from '../components/dashboard-header/dashboard-header';
-import { Footer } from '../components/footer/footer';
-import { DevModeBanner } from '../components/dev-mode/DevModeBanner';
 import { useAuth } from '../hooks/useAuth';
 
 function RootComponent() {
@@ -47,16 +44,9 @@ function RootComponent() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Development Mode Banner - show when authenticated and not on login page */}
-      {shouldShowHeader && <DevModeBanner />}
-
-      {/* Dashboard Header - show when authenticated and not on login page */}
-      {shouldShowHeader && <DashboardHeader />}
-
       <main className="flex-1">
         <Outlet />
       </main>
-      <Footer />
       <TanStackRouterDevtools />
     </div>
   );
