@@ -4,7 +4,7 @@
 import asyncio
 import csv
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Dict, Any
 
@@ -117,7 +117,7 @@ async def load_users_from_csv(session, csv_path: str) -> Dict[str, str]:
             return {}
         
         # Calculate time adjustment offset for users
-        current_time = datetime.utcnow()
+        current_time = datetime.now(timezone.utc)
         if latest_user_date:
             user_time_offset = current_time - latest_user_date
             print(f"👥 Latest user creation date in CSV: {latest_user_date}")
@@ -222,7 +222,7 @@ async def load_transactions_from_csv(session, csv_path: str, user_id_mapping: Di
             return
             
         # Calculate time adjustment offset
-        current_time = datetime.utcnow()
+        current_time = datetime.now(timezone.utc)
         if latest_transaction_date:
             time_offset = current_time - latest_transaction_date
             print(f"📅 Latest transaction date in CSV: {latest_transaction_date}")
