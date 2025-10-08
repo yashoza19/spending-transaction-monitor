@@ -65,17 +65,27 @@ For each real category, synonyms generated from:
 "health_fitness" → ["gym", "workout", "doctor", "pharmacy", "medical"]
 ```
 
-#### 3. **Semantic Embeddings (OpenAI)**
-- **Model**: `text-embedding-3-small` (1536 dimensions)
+#### 3. **Semantic Embeddings (Local - sentence-transformers)**
+- **Model**: `all-MiniLM-L6-v2` (384 dimensions)
+- **Provider**: sentence-transformers (Hugging Face)
+- **Deployment**: Runs locally within the application - no external services required
 - **Input**: Canonical category names  
 - **Purpose**: Semantic similarity search for unmapped terms
 - **Storage**: PostgreSQL with pgvector extension
+- **Benefits**: 
+  - ✓ No external API dependencies (Ollama, OpenAI, etc.)
+  - ✓ Self-contained within the application
+  - ✓ Fast CPU inference
+  - ✓ No API costs or rate limits
+  - ✓ Works offline
 
 ## 📁 Implementation Files
 
 ### **Core Scripts**
 - `seed_category_data.py` - Populates synonym table with mappings
-- `populate_embeddings.py` - Generates and stores OpenAI embeddings  
+- `populate_embeddings_local.py` - Generates and stores local embeddings using sentence-transformers
+- `populate_embeddings_ollama.py` - (Deprecated) Legacy Ollama-based embeddings
+- `populate_embeddings.py` - (Deprecated) Legacy OpenAI-based embeddings
 - `4a13a47c8ec1_prepopulate_category_data.py` - Migration for data population
 
 ### **Service Integration**
@@ -146,7 +156,7 @@ CREATE TABLE merchant_category_synonyms (
 ```sql
 CREATE TABLE merchant_category_embeddings (
     category TEXT PRIMARY KEY,
-    embedding VECTOR(1536),  -- OpenAI text-embedding-3-small
+    embedding VECTOR(384),  -- sentence-transformers all-MiniLM-L6-v2
     created_at TIMESTAMP DEFAULT NOW()
 );
 ```
@@ -167,11 +177,10 @@ async def normalize(session, raw_term: str) -> str:
 
 ### **Step 2: Vector Search (Semantic)**
 ```python  
-    # Generate embedding for unknown term
-    embedding = client.embeddings.create(
-        input=raw_term.lower(), 
-        model='text-embedding-3-small'
-    ).data[0].embedding
+    # Generate embedding for unknown term using local model
+    from sentence_transformers import SentenceTransformer
+    model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+    embedding = model.encode(raw_term.lower())
     
     # Find closest canonical category
     result = await session.execute("""
@@ -179,7 +188,7 @@ async def normalize(session, raw_term: str) -> str:
         FROM merchant_category_embeddings
         ORDER BY embedding <-> %s 
         LIMIT 1
-    """, [embedding])
+    """, [embedding.tolist()])
 ```
 
 ### **Step 3: Fallback**
@@ -219,16 +228,18 @@ normalized = await CategoryNormalizer.normalize(session, raw_category)
 ## 🔧 Setup Commands
 
 ```bash
-# Install dependencies
+# Install dependencies (includes sentence-transformers)
+cd packages/api
+uv sync
+
 cd packages/db
-uv add pandas
+uv sync
 
 # Populate synonym data
 pnpm seed:categories
 
-# Generate embeddings (requires OPENAI_API_KEY)
-export OPENAI_API_KEY="your-key"  
-pnpm populate:embeddings
+# Generate local embeddings (no API keys required!)
+python packages/db/src/db/scripts/populate_embeddings_local.py
 
 # Apply database migration
 pnpm upgrade
