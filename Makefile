@@ -561,7 +561,7 @@ reset-local: setup-dev-env
 .PHONY: build-run-local
 build-run-local: setup-dev-env
 	@echo "Building local images (excluding auth - using remote for Keycloak setup)..."
-	podman-compose -f podman-compose.yml -f podman-compose.build.yml build migrations api ui
+	podman-compose -f podman-compose.yml -f podman-compose.build.yml build --no-cache migrations api ui
 	@echo "Tagging built images as 'local'..."
 	podman tag $(UI_IMAGE) $(UI_IMAGE_LOCAL) || true
 	podman tag $(API_IMAGE) $(API_IMAGE_LOCAL) || true
