@@ -145,7 +145,7 @@ services:
 
   # React Frontend
   ui:
-    # image: quay.io/rh-ai-quickstart/spending-monitor-ui:${IMAGE_TAG:-latest}
+    image: quay.io/rh-ai-quickstart/spending-monitor-ui:${IMAGE_TAG:-latest}
     platform: linux/amd64
     build:
       context: .

@@ -14,15 +14,12 @@ services:
       dockerfile: packages/api/Containerfile
 
   # React Frontend - Build Override
+  # Environment variables are now injected at runtime, not build time
   ui:
     image: spending-monitor-ui:local  # Override quay image with local tag
     build:
       context: .
       dockerfile: packages/ui/Containerfile
-      args:
-        VITE_BYPASS_AUTH: ${VITE_BYPASS_AUTH:-false}
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
-        VITE_ENVIRONMENT: ${VITE_ENVIRONMENT:-staging}
 
 
   

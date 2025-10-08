@@ -3,16 +3,6 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Accept build arguments for Vite environment variables
-ARG VITE_BYPASS_AUTH=false
-ARG VITE_API_BASE_URL=/api
-ARG VITE_ENVIRONMENT=staging
-
-# Set as environment variables for the build
-ENV VITE_BYPASS_AUTH=$VITE_BYPASS_AUTH
-ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
-ENV VITE_ENVIRONMENT=$VITE_ENVIRONMENT
-
 # Install pnpm
 RUN npm install -g pnpm
 
@@ -43,6 +33,10 @@ RUN npm install -g serve
 # Copy built assets from builder stage
 COPY --from=builder /app/packages/ui/dist ./dist
 
+# Copy the runtime config generator script
+COPY packages/ui/generate-env-config.sh /usr/local/bin/generate-env-config.sh
+RUN chmod +x /usr/local/bin/generate-env-config.sh
+
 # Create non-root user for OpenShift compatibility
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001 -G nodejs
 
@@ -54,5 +48,5 @@ USER nodejs
 
 EXPOSE 8080
 
-# Use serve to host the SPA with proper routing
-CMD ["serve", "-s", "dist", "-l", "8080"]
+# Generate runtime config and start the server
+CMD ["sh", "-c", "generate-env-config.sh && serve -s dist -l 8080"]
