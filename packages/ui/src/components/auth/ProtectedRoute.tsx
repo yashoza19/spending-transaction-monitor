@@ -1,6 +1,13 @@
 /**
  * Protected Route Component
- * Handles authentication checks and redirects for protected pages
+ *
+ * @deprecated For general route protection, use the _protected layout route instead.
+ * This component is maintained for specialized use cases that require additional
+ * authorization checks (e.g., admin-only routes with requireAdmin prop).
+ *
+ * For typical protected routes, prefer the declarative approach:
+ * - Place routes under `_protected/` directory
+ * - The layout route handles authentication automatically
  */
 
 import React, { useEffect } from 'react';
