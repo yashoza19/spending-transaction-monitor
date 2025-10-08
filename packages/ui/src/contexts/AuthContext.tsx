@@ -208,7 +208,7 @@ const OIDCAuthWrapper = React.memo(({ children }: { children: React.ReactNode })
       ApiClient.setToken(null);
       // Note: Location clearing also handled by backend on logout
     }
-  }, [oidcAuth.user, oidcAuth.error]);
+  }, [oidcAuth.user, oidcAuth.error, oidcAuth.isLoading]);
 
   // Location is now handled by LocationCapture component
 
@@ -241,7 +241,7 @@ const OIDCAuthWrapper = React.memo(({ children }: { children: React.ReactNode })
 
     // Cleanup
     return () => {
-      ApiClient.setAuthErrorHandler(undefined as any);
+      ApiClient.setAuthErrorHandler(() => {});
     };
   }, []);
 
@@ -249,14 +249,15 @@ const OIDCAuthWrapper = React.memo(({ children }: { children: React.ReactNode })
   useEffect(() => {
     const events = oidcAuth.events;
     
-    const handleUserLoaded = (user: any) => {
-      if (user?.access_token) {
+    const handleUserLoaded = (user: unknown) => {
+      const userData = user as { access_token?: string };
+      if (userData?.access_token) {
         console.log('🔄 Token refreshed, updating API client');
-        ApiClient.setToken(user.access_token);
+        ApiClient.setToken(userData.access_token);
       }
     };
 
-    const handleSilentRenewError = (error: any) => {
+    const handleSilentRenewError = (error: unknown) => {
       console.error('❌ Silent token renewal failed:', error);
       // Redirect to login on silent renew failure
       window.location.href = '/login';
