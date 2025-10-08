@@ -68,7 +68,7 @@ export class ApiClient {
       console.log('🔍 Looking for OIDC tokens in localStorage:', {
         allKeys: allKeys.length,
         oidcKeys: oidcKeys.length,
-        oidcKeyList: oidcKeys
+        oidcKeyList: oidcKeys,
       });
     }
 
@@ -195,13 +195,15 @@ export class ApiClient {
           response.status,
           data,
         );
-        
+
         // Handle authentication errors globally
         if (apiError.isAuthError && ApiClient.onAuthError) {
-          console.warn('🔒 Authentication error detected, triggering auth error handler');
+          console.warn(
+            '🔒 Authentication error detected, triggering auth error handler',
+          );
           ApiClient.onAuthError();
         }
-        
+
         throw apiError;
       }
 
@@ -220,7 +222,9 @@ export class ApiClient {
 
       // Re-check for auth errors in caught errors
       if (error instanceof ApiError && error.isAuthError && ApiClient.onAuthError) {
-        console.warn('🔒 Authentication error detected in catch, triggering auth error handler');
+        console.warn(
+          '🔒 Authentication error detected in catch, triggering auth error handler',
+        );
         ApiClient.onAuthError();
       }
 

@@ -11,13 +11,12 @@ function RootComponent() {
     isAuthenticated: auth.isAuthenticated,
     isLoading: auth.isLoading,
     user: auth.user,
-    pathname: router.state.location.pathname
+    pathname: router.state.location.pathname,
   });
 
   // Hide header and banner on login page or when user is not authenticated
   const shouldShowHeader =
-    router.state.location.pathname !== '/login' &&
-    auth.isAuthenticated;
+    router.state.location.pathname !== '/login' && auth.isAuthenticated;
 
   console.log('RootComponent shouldShowHeader:', shouldShowHeader);
 

@@ -130,16 +130,18 @@ class KeycloakJWTBearer:
             return _jwks_cache
 
         jwks_uri = oidc_config['jwks_uri']
-        
+
         logger.info(f'Original JWKS URI: {jwks_uri}')
-        logger.info(f'Checking if "localhost:8080" in jwks_uri: {"localhost:8080" in jwks_uri}')
-        
+        logger.info(
+            f'Checking if "localhost:8080" in jwks_uri: {"localhost:8080" in jwks_uri}'
+        )
+
         # Replace localhost with keycloak for container-to-container communication
         # (OIDC discovery returns localhost URLs for browser access, but we need container names)
         if 'localhost:8080' in jwks_uri:
             jwks_uri = jwks_uri.replace('localhost:8080', 'keycloak:8080')
             logger.info('🔄 Replaced localhost:8080 with keycloak:8080 in JWKS URI')
-        
+
         logger.info(f'Fetching JWKS from: {jwks_uri}')
 
         try:

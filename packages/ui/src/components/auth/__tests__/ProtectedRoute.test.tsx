@@ -167,7 +167,7 @@ describe('ProtectedRoute', () => {
       await waitFor(() => {
         expect(screen.getByText('Loading user data...')).toBeInTheDocument();
       });
-      
+
       // Should not redirect in this case
       expect(mockNavigate).not.toHaveBeenCalled();
     });

@@ -26,7 +26,7 @@ export function ProtectedRoute({
         isLoading: auth.isLoading,
         isAuthenticated: auth.isAuthenticated,
         user: auth.user,
-        error: auth.error
+        error: auth.error,
       });
     }
 
@@ -51,7 +51,14 @@ export function ProtectedRoute({
         return;
       }
     }
-  }, [auth.isAuthenticated, auth.isLoading, auth.user, navigate, requireAdmin, auth.error]);
+  }, [
+    auth.isAuthenticated,
+    auth.isLoading,
+    auth.user,
+    navigate,
+    requireAdmin,
+    auth.error,
+  ]);
 
   // Show loading state while checking auth
   if (auth.isLoading) {

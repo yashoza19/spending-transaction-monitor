@@ -158,10 +158,10 @@ const OIDCAuthWrapper = React.memo(({ children }: { children: React.ReactNode })
         isLoading: oidcAuth.isLoading,
         isAuthenticated: !!oidcAuth.user,
         user: oidcAuth.user,
-        error: oidcAuth.error
+        error: oidcAuth.error,
       });
     }
-    
+
     if (oidcAuth.error) {
       console.error('OIDC Authentication Error:', oidcAuth.error);
     }
@@ -184,7 +184,7 @@ const OIDCAuthWrapper = React.memo(({ children }: { children: React.ReactNode })
         if (import.meta.env.DEV) {
           console.log('🔑 JWT Token set in API client:', {
             tokenLength: oidcAuth.user.access_token.length,
-            tokenStart: oidcAuth.user.access_token.substring(0, 20) + '...'
+            tokenStart: oidcAuth.user.access_token.substring(0, 20) + '...',
           });
         }
       } else {
@@ -198,7 +198,7 @@ const OIDCAuthWrapper = React.memo(({ children }: { children: React.ReactNode })
           id: oidcAuth.user.profile.sub,
           email: oidcAuth.user.profile.email,
           hasAccessToken: !!oidcAuth.user.access_token,
-          hasIdToken: !!oidcAuth.user.id_token
+          hasIdToken: !!oidcAuth.user.id_token,
         });
       }
     } else {
@@ -218,7 +218,7 @@ const OIDCAuthWrapper = React.memo(({ children }: { children: React.ReactNode })
     setUser(null);
     ApiClient.setToken(null);
     clearStoredLocation();
-    
+
     // Let OIDC handle the logout redirect properly
     // This will redirect to Keycloak logout, then back to post_logout_redirect_uri
     oidcAuth.signoutRedirect();
@@ -248,7 +248,7 @@ const OIDCAuthWrapper = React.memo(({ children }: { children: React.ReactNode })
   // Listen for token refresh events
   useEffect(() => {
     const events = oidcAuth.events;
-    
+
     const handleUserLoaded = (user: unknown) => {
       const userData = user as { access_token?: string };
       if (userData?.access_token) {
