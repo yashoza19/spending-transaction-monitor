@@ -215,6 +215,128 @@ make logs-local     # View service logs
 make reset-local    # Reset with fresh data
 ```
 
+### 🔐 Authentication Modes
+
+The application supports two authentication modes:
+
+#### **Production Mode (Default) - Keycloak OAuth2/OIDC**
+
+By default, the application uses **Keycloak** for secure authentication:
+
+- **Automatic Setup**: Keycloak realm and test users are automatically created on startup
+- **OAuth2/OIDC Flow**: Implements OpenID Connect with PKCE for secure authentication
+- **Automatic Token Refresh**: Tokens are automatically refreshed before expiration
+- **Test Users**: 
+  - `testuser` / `password` (Regular user)
+  - `adminuser` / `password` (Admin user)
+
+**Access Points:**
+- Frontend: http://localhost:3000 (redirects to Keycloak login)
+- Keycloak Admin: http://localhost:8080 (admin / admin)
+- API Docs: http://localhost:8000/docs
+
+#### **Development Mode - Auth Bypass**
+
+For local development, you can bypass authentication:
+
+```bash
+# Set environment variables for bypass mode
+BYPASS_AUTH=true VITE_BYPASS_AUTH=true VITE_ENVIRONMENT=development make build-run-local
+```
+
+In bypass mode:
+- ✅ No login required - automatic authentication as dev user
+- ✅ Yellow "DEV MODE - Authentication Bypassed" banner visible
+- ✅ Faster development iteration
+- ⚠️ **NOT for production use**
+
+**Switching Between Modes:**
+
+```bash
+# Production mode (Keycloak authentication)
+make build-run-local
+
+# Development mode (auth bypass)
+BYPASS_AUTH=true VITE_BYPASS_AUTH=true VITE_ENVIRONMENT=development make build-run-local
+```
+
+**Environment Variables:**
+
+| Variable | Values | Description |
+|----------|--------|-------------|
+| `BYPASS_AUTH` | `true`/`false` | Backend auth bypass |
+| `VITE_BYPASS_AUTH` | `true`/`false` | Frontend auth bypass |
+| `VITE_ENVIRONMENT` | `development`/`staging`/`production` | Environment mode |
+| `KEYCLOAK_URL` | URL | Keycloak server URL (default: `http://localhost:8080`) |
+
+## 💻 Local Development (pnpm)
+
+For local development without containers, use these pnpm commands:
+
+### Development Mode (Auth Bypass)
+
+```bash
+# Install dependencies
+pnpm setup
+
+# Start in development mode (auth bypassed)
+pnpm start:dev
+
+# Or start individual services
+pnpm backend:setup     # Setup database
+pnpm backend:start     # Start API (port 8002, auth bypass)
+pnpm --filter @*/ui dev # Start UI (port 3000)
+```
+
+### Production Mode (Keycloak)
+
+```bash
+# Start with Keycloak authentication
+pnpm start:prod
+
+# Access points:
+# - Frontend: http://localhost:3000
+# - API: http://localhost:8002
+# - Keycloak: http://localhost:8080
+```
+
+### Container Development
+
+```bash
+# Development mode (auth bypass) - fastest iteration
+pnpm dev:containers:auth
+
+# Production mode (Keycloak) - test real auth flow
+pnpm dev:containers:prod
+
+# Standard container startup
+pnpm dev:containers
+```
+
+### Utility Commands
+
+```bash
+# Database management
+pnpm db:start          # Start PostgreSQL container
+pnpm db:stop           # Stop PostgreSQL container
+pnpm db:upgrade        # Run migrations
+pnpm db:seed           # Load sample data
+pnpm db:verify         # Verify database connection
+
+# Authentication
+pnpm auth:start        # Start Keycloak container
+pnpm auth:stop         # Stop Keycloak container
+pnpm auth:setup-keycloak                # Setup Keycloak realm/client
+pnpm auth:setup-keycloak-with-users     # Setup Keycloak with DB users
+
+# Code quality
+pnpm lint              # Run all linters
+pnpm lint:fix          # Auto-fix linting issues
+pnpm format            # Format code
+pnpm test              # Run tests
+pnpm type-check        # Run TypeScript checks
+```
+
 ## 🧪 Testing Alert Rules
 
 After starting the application with `make run-local`, you can test alert rules interactively:
