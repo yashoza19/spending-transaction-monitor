@@ -43,12 +43,9 @@ services:
     ports:
       - "8080:8080"
     command: start-dev
+    # Disable healthcheck - Keycloak works fine, keycloak-setup handles waiting
     healthcheck:
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /realms/master HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK' || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+      test: "NONE"
     networks:
       - spending-monitor
 
@@ -63,12 +60,17 @@ services:
       - ./packages/auth/scripts:/app/scripts
     command: >
       sh -c "
+        echo 'Waiting for Keycloak to be ready...' &&
+        for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
+          nc -z keycloak 8080 && break || echo 'Waiting...' && sleep 10;
+        done &&
+        echo 'Keycloak port is open, waiting 10 more seconds for full startup...' &&
+        sleep 10 &&
         pip install --quiet requests &&
         python /app/scripts/setup_keycloak.py
       "
     depends_on:
-      keycloak:
-        condition: service_healthy
+      - keycloak
     networks:
       - spending-monitor
     restart: "no"
@@ -137,7 +139,7 @@ services:
       postgres:
         condition: service_healthy
       keycloak:
-        condition: service_healthy
+        condition: service_started
       smtp4dev:
         condition: service_started
     networks:
