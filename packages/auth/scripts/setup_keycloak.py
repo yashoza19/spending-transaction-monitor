@@ -24,12 +24,27 @@ except ImportError:
 class KeycloakSetup:
     def __init__(self):
         self.base_url = os.getenv("KEYCLOAK_URL", "http://localhost:8080")
-        self.admin_username = "admin"
-        self.admin_password = "admin"
+        self.admin_username = os.getenv("KEYCLOAK_ADMIN_USER", "admin")
+        self.admin_password = os.getenv("KEYCLOAK_ADMIN_PASSWORD", "admin")
         self.master_realm = "master"
-        self.app_realm = "spending-monitor"
-        self.client_id = "spending-monitor"
+        self.app_realm = os.getenv("KEYCLOAK_REALM", "spending-monitor")
+        self.client_id = os.getenv("KEYCLOAK_CLIENT_ID", "spending-monitor")
         self.access_token: Optional[str] = None
+        self.environment = os.getenv("ENVIRONMENT", "development")
+        
+        # Get redirect URIs and web origins from environment
+        # In production, these should be set explicitly
+        default_redirect_uris = "http://localhost:3000/*"
+        default_web_origins = "http://localhost:3000"
+        
+        redirect_uris_str = os.getenv("KEYCLOAK_REDIRECT_URIS", default_redirect_uris)
+        web_origins_str = os.getenv("KEYCLOAK_WEB_ORIGINS", default_web_origins)
+        
+        self.redirect_uris = [uri.strip() for uri in redirect_uris_str.split(",")]
+        self.web_origins = [origin.strip() for origin in web_origins_str.split(",")]
+        
+        # Default password for created users (should be strong in production)
+        self.default_password = os.getenv("KEYCLOAK_DEFAULT_PASSWORD", "password123")
         
         # Try to set up database connection if available
         self.db_available = False
@@ -139,8 +154,8 @@ class KeycloakSetup:
                 "directAccessGrantsEnabled": True,
                 "serviceAccountsEnabled": False,
                 "implicitFlowEnabled": False,
-                "redirectUris": ["http://localhost:3000/*"],
-                "webOrigins": ["http://localhost:3000"],
+                "redirectUris": self.redirect_uris,
+                "webOrigins": self.web_origins,
                 "attributes": {"pkce.code.challenge.method": "S256"},
             }
 
@@ -323,7 +338,7 @@ class KeycloakSetup:
                     users.append({
                         "username": username,
                         "email": row.email,
-                        "password": "password123",  # Default password for all users
+                        "password": self.default_password,  # Default password for all users
                         "roles": ["user"]
                     })
                 
@@ -339,13 +354,13 @@ class KeycloakSetup:
             {
                 "username": "testuser",
                 "email": "testuser@example.com",
-                "password": "password123",
+                "password": self.default_password,
                 "roles": ["user"],
             },
             {
                 "username": "user1",
                 "email": "user1@example.com",
-                "password": "password123",
+                "password": self.default_password,
                 "roles": ["user"],
             },
         ]
@@ -379,7 +394,7 @@ class KeycloakSetup:
             admin_created = self.create_keycloak_user(
                 username="admin",
                 email="admin@example.com",
-                password="password123",
+                password=self.default_password,
                 roles=["user", "admin"]
             )
             
@@ -425,7 +440,12 @@ class KeycloakSetup:
 
     async def run_setup_async(self) -> bool:
         """Run the complete realm setup (async version)"""
-        self.log("🚀 Starting Keycloak setup with database users")
+        self.log("🚀 Starting Keycloak setup")
+        self.log("=" * 60)
+        self.log(f"Environment: {self.environment}")
+        self.log(f"Keycloak URL: {self.base_url}")
+        self.log(f"Realm: {self.app_realm}")
+        self.log(f"Client ID: {self.client_id}")
         self.log("=" * 60)
 
         # Step 1: Get admin token
@@ -459,14 +479,34 @@ class KeycloakSetup:
         self.log("=" * 60)
         self.log("🎉 Keycloak setup completed successfully!")
         self.log("📋 Summary:")
+        self.log(f"   • Environment: {self.environment}")
+        self.log(f"   • Keycloak URL: {self.base_url}")
         self.log(f"   • Realm: {self.app_realm}")
+        self.log(f"   • Client ID: {self.client_id}")
+        self.log(f"   • Redirect URIs: {', '.join(self.redirect_uris)}")
+        self.log(f"   • Web Origins: {', '.join(self.web_origins)}")
         if self.db_available:
             self.log("   • Users synced from database")
-        self.log("   • Admin user: admin@example.com / password123")
-        self.log("   • Test users: user1@example.com (and others) / password123")
+        self.log(f"   • Admin user: admin@example.com / {self.default_password}")
+        self.log(f"   • Test users: user1@example.com (and others) / {self.default_password}")
+        
+        # Show warnings for production
+        if self.environment == "production":
+            self.log("")
+            self.log("⚠️  PRODUCTION MODE WARNINGS:")
+            if self.default_password == "password123":
+                self.log("   • Using default password! Set KEYCLOAK_DEFAULT_PASSWORD to a strong password")
+            if "localhost" in self.base_url:
+                self.log("   • Using localhost URL! Set KEYCLOAK_URL to production URL")
+            if any("localhost" in uri for uri in self.redirect_uris):
+                self.log("   • Using localhost redirect URIs! Set KEYCLOAK_REDIRECT_URIS")
+            if any("localhost" in origin for origin in self.web_origins):
+                self.log("   • Using localhost web origins! Set KEYCLOAK_WEB_ORIGINS")
+        
+        self.log("")
         self.log("🔗 Next steps:")
         self.log("   1. Set BYPASS_AUTH=false in your environment")
-        self.log("   2. Test the UI: http://localhost:3000")
+        self.log("   2. Test the UI")
         self.log("   3. Login with created users")
 
         return True
