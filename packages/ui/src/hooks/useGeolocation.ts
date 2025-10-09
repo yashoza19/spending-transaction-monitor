@@ -46,12 +46,13 @@ export function useUserLocation(
       try {
         console.log('📤 Sending location to backend:', loc);
 
+        // Use apiClient to automatically include Authorization header
+        const { apiClient } = await import('../services/apiClient');
+
         // Update user location consent and coordinates
-        const response = await fetch('/api/users/location', {
+        await apiClient.fetch('/api/users/location', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer test-token', // TODO: Use real auth token
             'X-User-Latitude': loc.latitude.toString(),
             'X-User-Longitude': loc.longitude.toString(),
             'X-User-Location-Accuracy': loc.accuracy.toString(),
@@ -64,11 +65,7 @@ export function useUserLocation(
           }),
         });
 
-        if (response.ok) {
-          console.log('✅ Location sent to backend successfully');
-        } else {
-          console.error('❌ Failed to send location to backend:', response.status);
-        }
+        console.log('✅ Location sent to backend successfully');
       } catch (err) {
         console.error('❌ Error sending location to backend:', err);
       }

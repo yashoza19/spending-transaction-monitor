@@ -31,9 +31,14 @@ export class ApiClient {
 
   // Static method to set token from auth context
   private static currentToken: string | null = null;
+  private static onAuthError?: () => void;
 
   static setToken(token: string | null) {
     ApiClient.currentToken = token;
+  }
+
+  static setAuthErrorHandler(handler: () => void) {
+    ApiClient.onAuthError = handler;
   }
 
   constructor(config: ApiClientConfig = {}) {
@@ -49,12 +54,23 @@ export class ApiClient {
   private getToken(): string | null {
     // First try static token (set from auth context)
     if (ApiClient.currentToken) {
+      if (import.meta.env.DEV) {
+        console.log('🔑 Using static token from auth context');
+      }
       return ApiClient.currentToken;
     }
 
     // Check localStorage for OIDC tokens
     const allKeys = Object.keys(localStorage);
     const oidcKeys = allKeys.filter((k) => k.includes('oidc'));
+
+    if (import.meta.env.DEV) {
+      console.log('🔍 Looking for OIDC tokens in localStorage:', {
+        allKeys: allKeys.length,
+        oidcKeys: oidcKeys.length,
+        oidcKeyList: oidcKeys,
+      });
+    }
 
     // Try multiple possible key patterns
     const possibleKeys = [
@@ -68,6 +84,9 @@ export class ApiClient {
         if (stored) {
           const parsed = JSON.parse(stored);
           if (parsed.access_token) {
+            if (import.meta.env.DEV) {
+              console.log('🔑 Found token in specific key:', key);
+            }
             return parsed.access_token;
           }
         }
@@ -83,6 +102,9 @@ export class ApiClient {
         if (stored) {
           const parsed = JSON.parse(stored);
           if (parsed.access_token) {
+            if (import.meta.env.DEV) {
+              console.log('🔑 Found token in OIDC key:', k);
+            }
             return parsed.access_token;
           }
         }
@@ -91,6 +113,9 @@ export class ApiClient {
       }
     }
 
+    if (import.meta.env.DEV) {
+      console.warn('⚠️ No JWT token found in localStorage');
+    }
     return null;
   }
 
@@ -165,11 +190,21 @@ export class ApiClient {
       }
 
       if (!response.ok) {
-        throw new ApiError(
+        const apiError = new ApiError(
           `HTTP ${response.status}: ${response.statusText}`,
           response.status,
           data,
         );
+
+        // Handle authentication errors globally
+        if (apiError.isAuthError && ApiClient.onAuthError) {
+          console.warn(
+            '🔒 Authentication error detected, triggering auth error handler',
+          );
+          ApiClient.onAuthError();
+        }
+
+        throw apiError;
       }
 
       return {
@@ -183,6 +218,14 @@ export class ApiClient {
 
       if (error instanceof Error && error.name === 'AbortError') {
         throw new ApiError('Request timeout', 408);
+      }
+
+      // Re-check for auth errors in caught errors
+      if (error instanceof ApiError && error.isAuthError && ApiClient.onAuthError) {
+        console.warn(
+          '🔒 Authentication error detected in catch, triggering auth error handler',
+        );
+        ApiClient.onAuthError();
       }
 
       throw error;

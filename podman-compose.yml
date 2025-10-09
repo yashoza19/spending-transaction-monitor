@@ -25,6 +25,58 @@ services:
     networks:
       - spending-monitor
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    platform: linux/amd64
+    container_name: spending-monitor-keycloak
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_HTTP_PORT=8080
+      - KC_HOSTNAME_STRICT=false
+      - KC_HOSTNAME_STRICT_HTTPS=false
+      - KC_HTTP_ENABLED=true
+      - KC_HEALTH_ENABLED=true
+      - KC_HOSTNAME=localhost
+      - KC_HOSTNAME_PORT=8080
+      - KC_HOSTNAME_URL=http://localhost:8080
+    ports:
+      - "8080:8080"
+    command: start-dev
+    # Disable healthcheck - Keycloak works fine, keycloak-setup handles waiting
+    healthcheck:
+      test: "NONE"
+    networks:
+      - spending-monitor
+
+  keycloak-setup:
+    image: python:3.12-slim
+    platform: linux/amd64
+    container_name: spending-monitor-keycloak-setup
+    working_dir: /app
+    environment:
+      - KEYCLOAK_URL=http://keycloak:8080
+      - DATABASE_URL=postgresql+asyncpg://user:password@postgres:5432/spending-monitor
+    volumes:
+      - ./packages/auth/scripts:/app/scripts
+    command: >
+      sh -c "
+        echo 'Waiting for Keycloak to be ready...' &&
+        for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
+          python3 -c 'import socket; s=socket.socket(); s.settimeout(1); s.connect((\"keycloak\", 8080)); s.close()' 2>/dev/null && break || (echo 'Waiting...' && sleep 10);
+        done &&
+        echo 'Keycloak port is open, waiting 20 more seconds for full startup...' &&
+        sleep 20 &&
+        pip install --quiet requests sqlalchemy asyncpg psycopg2-binary &&
+        python /app/scripts/setup_keycloak.py
+      "
+    depends_on:
+      - keycloak
+      - postgres
+    networks:
+      - spending-monitor
+    restart: "no"
+
   migrations:
     image: quay.io/rh-ai-quickstart/spending-monitor-db:${IMAGE_TAG:-latest}
     platform: linux/amd64
@@ -52,11 +104,11 @@ services:
 
   # FastAPI Backend
   api:
-    image: quay.io/rh-ai-quickstart/spending-monitor-api:${IMAGE_TAG:-latest}
+    # image: quay.io/rh-ai-quickstart/spending-monitor-api:${IMAGE_TAG:-latest}
     platform: linux/amd64
-    # build:
-    #   context: .
-    #   dockerfile: packages/api/Containerfile
+    build:
+      context: .
+      dockerfile: packages/api/Containerfile
     container_name: spending-monitor-api
     env_file:
       - .env.development
@@ -70,7 +122,7 @@ services:
       - SMTP_USE_TLS=${SMTP_USE_TLS:-false}
       - SMTP_USE_SSL=${SMTP_USE_SSL:-false}
       - ENVIRONMENT=${ENVIRONMENT:-development}
-      - BYPASS_AUTH=${BYPASS_AUTH:-true}
+      - BYPASS_AUTH=${BYPASS_AUTH:-false}
       - API_PORT=${API_PORT:-8000}
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080}
@@ -80,7 +132,7 @@ services:
       - MODEL=${MODEL:-gpt-3.5-turbo}
       - LLM_PROVIDER=${LLM_PROVIDER:-openai}
       - NODE_ENV=${NODE_ENV:-development}
-      - KEYCLOAK_URL=${KEYCLOAK_URL:-http://localhost:8080}
+      - KEYCLOAK_URL=${KEYCLOAK_URL:-http://keycloak:8080}
       - KEYCLOAK_REALM=${KEYCLOAK_REALM:-spending-monitor}
       - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID:-spending-monitor}
     ports:
@@ -88,6 +140,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      keycloak:
+        condition: service_started
       smtp4dev:
         condition: service_started
     networks:
@@ -97,9 +151,9 @@ services:
   ui:
     image: quay.io/rh-ai-quickstart/spending-monitor-ui:${IMAGE_TAG:-latest}
     platform: linux/amd64
-    # build:
-    #   context: .
-    #   dockerfile: packages/ui/Containerfile
+    build:
+      context: .
+      dockerfile: packages/ui/Containerfile
     container_name: spending-monitor-ui
     env_file:
       - .env.development
@@ -109,6 +163,11 @@ services:
       - spending-monitor
     environment:
       - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api}
+      - VITE_BYPASS_AUTH=${VITE_BYPASS_AUTH:-false}
+      - VITE_ENVIRONMENT=${VITE_ENVIRONMENT:-staging}
+      # UI needs public Keycloak URL (accessible from browser), not internal container hostname
+      - VITE_KEYCLOAK_URL=${VITE_KEYCLOAK_URL:-http://localhost:8080/realms/spending-monitor}
+      - VITE_KEYCLOAK_CLIENT_ID=${VITE_KEYCLOAK_CLIENT_ID:-spending-monitor}
 
   # Nginx reverse proxy to serve UI and proxy API
   nginx:
@@ -125,7 +184,31 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
 
-  # Optional: pgAdmin for database management
+  # Keycloak Identity Provider
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    platform: linux/amd64
+    container_name: spending-monitor-keycloak
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_HTTP_PORT: 8080
+    ports:
+      - "8080:8080"
+    networks:
+      - spending-monitor
+    command: ["start-dev", "--import-realm"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+
+  # Optional: pgAdmin for database management  
   pgadmin:
     image: dpage/pgadmin4:latest
     platform: linux/amd64
@@ -137,7 +220,7 @@ services:
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
-      - "8080:80"
+      - "8081:80"  # Changed from 8080 to avoid conflict with Keycloak
     depends_on:
       - postgres
     networks:

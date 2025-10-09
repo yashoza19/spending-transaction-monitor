@@ -142,7 +142,7 @@ describe('ProtectedRoute', () => {
     });
 
     it('should handle null user even when isAuthenticated is true', async () => {
-      // Arrange - Edge case where auth state is inconsistent
+      // Arrange - Edge case during OIDC callback when token exists but user data is still loading
       const mockAuth: AuthContextType = {
         user: null,
         isAuthenticated: true,
@@ -162,13 +162,14 @@ describe('ProtectedRoute', () => {
         </AuthContext.Provider>,
       );
 
-      // Assert - Should redirect to login even if isAuthenticated is true
+      // Assert - Should show loading state, not redirect
+      // This is the correct behavior during OIDC callback when token exists but user data is still loading
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith({
-          to: '/login',
-          search: { redirect: '/transactions?filter=recent', error: '' },
-        });
+        expect(screen.getByText('Loading user data...')).toBeInTheDocument();
       });
+
+      // Should not redirect in this case
+      expect(mockNavigate).not.toHaveBeenCalled();
     });
   });
 

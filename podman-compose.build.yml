@@ -1,20 +1,25 @@
 services:
   # PostgreSQL Database - Build Override
   migrations:
+    image: spending-monitor-db:local  # Override quay image with local tag
     build:
       context: .
       dockerfile: packages/db/Containerfile
 
   # FastAPI Backend - Build Override
   api:
+    image: spending-monitor-api:local  # Override quay image with local tag
     build:
       context: .
       dockerfile: packages/api/Containerfile
 
   # React Frontend - Build Override
+  # Environment variables are now injected at runtime, not build time
   ui:
+    image: spending-monitor-ui:local  # Override quay image with local tag
     build:
       context: .
       dockerfile: packages/ui/Containerfile
+
 
   

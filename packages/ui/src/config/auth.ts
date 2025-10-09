@@ -1,6 +1,7 @@
 /**
  * Authentication configuration
  * Handles both development bypass and production OIDC setup
+ * Uses runtime environment configuration from window.ENV
  */
 
 export interface AuthConfig {
@@ -14,34 +15,53 @@ export interface AuthConfig {
   };
 }
 
-// Environment detection
-const environment = (import.meta.env.VITE_ENVIRONMENT ||
-  'development') as AuthConfig['environment'];
+/**
+ * Get runtime environment configuration
+ * Falls back to import.meta.env for development mode (vite dev server)
+ */
+function getRuntimeConfig() {
+  // In production (served by nginx/serve), window.ENV is injected
+  if (typeof window !== 'undefined' && window.ENV) {
+    return {
+      bypassAuth: window.ENV.BYPASS_AUTH === true,
+      environment: window.ENV.ENVIRONMENT as AuthConfig['environment'],
+      keycloakUrl: window.ENV.KEYCLOAK_URL,
+      keycloakClientId: window.ENV.KEYCLOAK_CLIENT_ID,
+    };
+  }
 
-// Bypass detection - auto-enable in development unless explicitly disabled
-const bypassAuth =
-  import.meta.env.VITE_BYPASS_AUTH === 'true' ||
-  (environment === 'development' && import.meta.env.VITE_BYPASS_AUTH !== 'false');
-
-export const authConfig: AuthConfig = {
-  environment,
-  bypassAuth,
-  keycloak: {
-    authority:
+  // Fallback to build-time env vars for local development (vite dev)
+  return {
+    bypassAuth: import.meta.env.VITE_BYPASS_AUTH === 'true',
+    environment: (import.meta.env.VITE_ENVIRONMENT ||
+      'development') as AuthConfig['environment'],
+    keycloakUrl:
       import.meta.env.VITE_KEYCLOAK_URL ||
       'http://localhost:8080/realms/spending-monitor',
-    clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'spending-monitor',
+    keycloakClientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'spending-monitor',
+  };
+}
+
+const runtimeConfig = getRuntimeConfig();
+
+export const authConfig: AuthConfig = {
+  environment: runtimeConfig.environment,
+  bypassAuth: runtimeConfig.bypassAuth,
+  keycloak: {
+    authority: runtimeConfig.keycloakUrl,
+    clientId: runtimeConfig.keycloakClientId,
     redirectUri:
-      import.meta.env.VITE_KEYCLOAK_REDIRECT_URI ||
-      (typeof window !== 'undefined'
-        ? window.location.origin
-        : 'http://localhost:3000'),
+      typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
     postLogoutRedirectUri:
-      import.meta.env.VITE_KEYCLOAK_POST_LOGOUT_REDIRECT_URI ||
-      (typeof window !== 'undefined'
-        ? window.location.origin
-        : 'http://localhost:3000'),
+      typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
   },
 };
 
-// Auth configuration loaded
+// Log configuration in development
+if (import.meta.env.DEV || runtimeConfig.environment === 'development') {
+  console.log('🔧 Auth configuration loaded:', {
+    bypassAuth: authConfig.bypassAuth,
+    environment: authConfig.environment,
+    source: window.ENV ? 'runtime (window.ENV)' : 'build-time (import.meta.env)',
+  });
+}
