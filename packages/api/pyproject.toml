@@ -31,6 +31,8 @@ dependencies = [
     "requests>=2.31.0",
     "spending-monitor-db",
     "llama-stack-client>=0.2.12",
+    "sentence-transformers>=2.2.0",
+    "torch>=2.0.0",
 ]
 
 [project.optional-dependencies]
