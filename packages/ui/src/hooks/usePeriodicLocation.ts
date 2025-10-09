@@ -50,7 +50,7 @@ export function usePeriodicLocation(): UsePeriodicLocationResult {
 
     // Use apiClient to automatically include Authorization header
     const { apiClient } = await import('../services/apiClient');
-    
+
     await apiClient.fetch('/api/users/location', {
       method: 'POST',
       headers,
