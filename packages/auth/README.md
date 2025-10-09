@@ -11,29 +11,77 @@ OAuth2/OIDC authentication infrastructure using Keycloak for the Spending Monito
 
 ## Quick Start
 
-### 1. Start Services
+### Development Setup
+
+#### 1. Start Services
 ```bash
 ./scripts/auth-dev.sh services-up
 ```
 
-### 2. Configure Realm
+#### 2. Configure Realm (Development)
 ```bash
 cd scripts
 python3 setup_keycloak.py
 ```
 
-### 3. Access
+#### 3. Access
 - **Keycloak Admin Console**: http://localhost:8080
 - **Admin Credentials**: admin / admin
+
+### Production Setup
+
+For production deployments, configure the following environment variables before running the setup script:
+
+```bash
+# Required for production
+export ENVIRONMENT=production
+export KEYCLOAK_URL=https://keycloak.your-domain.com
+export KEYCLOAK_ADMIN_USER=your-admin-username
+export KEYCLOAK_ADMIN_PASSWORD=your-secure-admin-password
+export KEYCLOAK_REDIRECT_URIS=https://app.your-domain.com/*,https://app.your-domain.com
+export KEYCLOAK_WEB_ORIGINS=https://app.your-domain.com
+export KEYCLOAK_DEFAULT_PASSWORD=your-secure-default-password
+
+# Optional (have defaults)
+export KEYCLOAK_REALM=spending-monitor
+export KEYCLOAK_CLIENT_ID=spending-monitor
+
+# Run setup
+cd scripts
+python3 setup_keycloak.py
+```
+
+**Important Security Notes for Production:**
+- Never use default passwords in production
+- Use HTTPS for all URLs (Keycloak, redirect URIs, web origins)
+- Set strong admin credentials
+- Configure proper CORS origins
+- Consider using Keycloak's user federation instead of creating users with default passwords
+
+## Configuration Options
+
+The setup script supports the following environment variables for flexible configuration:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `KEYCLOAK_URL` | `http://localhost:8080` | Keycloak server URL |
+| `KEYCLOAK_ADMIN_USER` | `admin` | Keycloak admin username |
+| `KEYCLOAK_ADMIN_PASSWORD` | `admin` | Keycloak admin password |
+| `KEYCLOAK_REALM` | `spending-monitor` | Realm name to create/configure |
+| `KEYCLOAK_CLIENT_ID` | `spending-monitor` | Client ID for the application |
+| `KEYCLOAK_REDIRECT_URIS` | `http://localhost:3000/*` | Comma-separated list of valid redirect URIs |
+| `KEYCLOAK_WEB_ORIGINS` | `http://localhost:3000` | Comma-separated list of allowed web origins |
+| `KEYCLOAK_DEFAULT_PASSWORD` | `password123` | Default password for created users |
+| `ENVIRONMENT` | `development` | Environment mode (development/production) |
 
 ## Client Configuration
 
 The setup script automatically creates:
-- **Realm**: `spending-monitor`
-- **Client ID**: `spending-monitor`  
+- **Realm**: Value from `KEYCLOAK_REALM` (default: `spending-monitor`)
+- **Client ID**: Value from `KEYCLOAK_CLIENT_ID` (default: `spending-monitor`)
 - **Client Type**: Public (PKCE flow)
-- **Valid Redirect URIs**: `http://localhost:5173/*`
-- **Web Origins**: `http://localhost:5173`
+- **Valid Redirect URIs**: Value from `KEYCLOAK_REDIRECT_URIS`
+- **Web Origins**: Value from `KEYCLOAK_WEB_ORIGINS`
 
 ## Test Users
 

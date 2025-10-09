@@ -12,21 +12,48 @@ import os
 
 class DatabaseUserSyncer:
     def __init__(self):
-        self.base_url = "http://localhost:8080"
-        self.admin_username = "admin"
-        self.admin_password = "admin"
+        self.base_url = os.getenv("KEYCLOAK_URL", "http://localhost:8080")
+        self.admin_username = os.getenv("KEYCLOAK_ADMIN_USER", "admin")
+        self.admin_password = os.getenv("KEYCLOAK_ADMIN_PASSWORD", "admin")
         self.master_realm = "master"
-        self.app_realm = "spending-monitor"
+        self.app_realm = os.getenv("KEYCLOAK_REALM", "spending-monitor")
         self.access_token: Optional[str] = None
+        self.default_password = os.getenv("KEYCLOAK_DEFAULT_PASSWORD", "password123")
         
-        # Database connection
-        self.db_config = {
-            'host': 'localhost',
-            'port': 5432,
-            'database': 'spending-monitor',
-            'user': 'user',
-            'password': 'password'
-        }
+        # Database connection - parse from DATABASE_URL if available
+        database_url = os.getenv('DATABASE_URL', '')
+        if database_url and database_url.startswith('postgresql'):
+            # Parse postgresql://user:password@host:port/database
+            # Note: This is a simple parser, might need improvement for complex URLs
+            import re
+            match = re.match(r'postgresql(?:\+\w+)?://([^:]+):([^@]+)@([^:]+):(\d+)/(.+)', database_url)
+            if match:
+                user, password, host, port, database = match.groups()
+                self.db_config = {
+                    'host': host,
+                    'port': int(port),
+                    'database': database,
+                    'user': user,
+                    'password': password
+                }
+            else:
+                # Fallback to defaults
+                self.db_config = {
+                    'host': os.getenv('POSTGRES_HOST', 'localhost'),
+                    'port': int(os.getenv('DB_PORT', '5432')),
+                    'database': os.getenv('POSTGRES_DB', 'spending-monitor'),
+                    'user': os.getenv('POSTGRES_USER', 'user'),
+                    'password': os.getenv('POSTGRES_PASSWORD', 'password')
+                }
+        else:
+            # Use individual env vars
+            self.db_config = {
+                'host': os.getenv('POSTGRES_HOST', 'localhost'),
+                'port': int(os.getenv('DB_PORT', '5432')),
+                'database': os.getenv('POSTGRES_DB', 'spending-monitor'),
+                'user': os.getenv('POSTGRES_USER', 'user'),
+                'password': os.getenv('POSTGRES_PASSWORD', 'password')
+            }
 
     def log(self, message: str, level: str = "INFO"):
         """Print formatted log message"""
@@ -76,7 +103,7 @@ class DatabaseUserSyncer:
                     'first_name': row[2],
                     'last_name': row[3],
                     'username': row[1].split('@')[0],  # Use email prefix as username
-                    'password': 'password123'  # Default password for all users
+                    'password': self.default_password  # Default password for all users
                 })
             
             cursor.close()
@@ -160,7 +187,7 @@ class DatabaseUserSyncer:
         self.log(f"📊 Successfully synced {success_count}/{len(db_users)} users")
         self.log("🔗 Users can now log in with:")
         self.log("   • Email: their email address")
-        self.log("   • Password: password123 (default)")
+        self.log(f"   • Password: {self.default_password} (default)")
 
         return success_count > 0
 
