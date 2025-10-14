@@ -49,7 +49,9 @@ const DevAuthProvider = React.memo(({ children }: { children: React.ReactNode })
         setIsLoading(true);
         setError(null);
 
-        const response = await fetch('/api/users/profile');
+        // Create apiClient instance for this request
+        const client = new ApiClient();
+        const response = await client.fetch('/api/users/profile');
         if (response.ok) {
           const apiUser = await response.json();
           const devUser: User = {

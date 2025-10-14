@@ -6,6 +6,7 @@ import {
   checkLocationPermission,
   type UserLocation,
 } from '../services/geolocation';
+import { apiClient } from '../services/apiClient';
 
 interface LocationState {
   location: UserLocation | null;
@@ -47,28 +48,24 @@ export function useUserLocation(
         console.log('📤 Sending location to backend:', loc);
 
         // Update user location consent and coordinates
-        const response = await fetch('/api/users/location', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer test-token', // TODO: Use real auth token
-            'X-User-Latitude': loc.latitude.toString(),
-            'X-User-Longitude': loc.longitude.toString(),
-            'X-User-Location-Accuracy': loc.accuracy.toString(),
-          },
-          body: JSON.stringify({
+        await apiClient.post(
+          '/users/location',
+          {
             location_consent_given: true,
             last_app_location_latitude: loc.latitude,
             last_app_location_longitude: loc.longitude,
             last_app_location_accuracy: loc.accuracy,
-          }),
-        });
+          },
+          {
+            headers: {
+              'X-User-Latitude': loc.latitude.toString(),
+              'X-User-Longitude': loc.longitude.toString(),
+              'X-User-Location-Accuracy': loc.accuracy.toString(),
+            },
+          },
+        );
 
-        if (response.ok) {
-          console.log('✅ Location sent to backend successfully');
-        } else {
-          console.error('❌ Failed to send location to backend:', response.status);
-        }
+        console.log('✅ Location sent to backend successfully');
       } catch (err) {
         console.error('❌ Error sending location to backend:', err);
       }

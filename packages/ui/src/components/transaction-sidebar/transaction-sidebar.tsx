@@ -3,7 +3,7 @@ import { Button } from '../atoms/button/button';
 import { statusColors } from '../../lib/colors';
 import { cn } from '../../lib/utils';
 import { getCategoryIcon } from '../../lib/category-icons';
-import { Copy, X, Calendar, CreditCard } from 'lucide-react';
+import { Copy, X, Calendar, CreditCard, MapPin } from 'lucide-react';
 import type { Transaction } from '../../schemas/transaction';
 
 export interface TransactionSidebarProps {
@@ -178,6 +178,39 @@ export function TransactionSidebar({
               <p className="text-sm text-foreground leading-relaxed">
                 {transaction.description}
               </p>
+            </div>
+          )}
+
+          {/* Location Info */}
+          {(transaction.merchant_city ||
+            transaction.merchant_state ||
+            transaction.merchant_country) && (
+            <div className="pt-4 border-t border-border/50">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">
+                Location
+              </p>
+              <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
+                <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  {transaction.merchant_city && (
+                    <p className="text-sm font-medium text-foreground">
+                      {transaction.merchant_city}
+                    </p>
+                  )}
+                  {(transaction.merchant_state || transaction.merchant_country) && (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {[transaction.merchant_state, transaction.merchant_country]
+                        .filter(Boolean)
+                        .join(', ')}
+                    </p>
+                  )}
+                  {transaction.merchant_zipcode && (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {transaction.merchant_zipcode}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>

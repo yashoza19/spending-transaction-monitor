@@ -102,7 +102,7 @@ class KeycloakRealmCreator:
                 "enabled": True,
                 "publicClient": True,
                 "standardFlowEnabled": True,
-                "directAccessGrantsEnabled": False,
+                "directAccessGrantsEnabled": True,  # Enable for testing/CLI scripts
                 "serviceAccountsEnabled": False,
                 "implicitFlowEnabled": False,
                 "redirectUris": ["http://localhost:5173/*"],

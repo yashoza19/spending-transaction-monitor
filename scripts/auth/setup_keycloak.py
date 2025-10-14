@@ -11,8 +11,8 @@ from typing import Optional
 class KeycloakRealmCreator:
     def __init__(self):
         self.base_url = "http://localhost:8080"
-        self.admin_username = "myadmin"
-        self.admin_password = "mysecurepassword"
+        self.admin_username = "admin"
+        self.admin_password = "admin"
         self.master_realm = "master"
         self.app_realm = "spending-monitor"
         self.client_id = "spending-monitor"
@@ -102,7 +102,7 @@ class KeycloakRealmCreator:
                 "enabled": True,
                 "publicClient": True,
                 "standardFlowEnabled": True,
-                "directAccessGrantsEnabled": False,
+                "directAccessGrantsEnabled": True,  # Enable for testing/CLI scripts
                 "serviceAccountsEnabled": False,
                 "implicitFlowEnabled": False,
                 "redirectUris": ["http://localhost:3000/*"],
@@ -353,7 +353,7 @@ class KeycloakRealmCreator:
             {
                 "username": "johndoe",
                 "email": "john.doe@example.com",
-                "password": "johnpassword",
+                "password": "password",  # Simplified for testing/scripts
                 "roles": ["user"],
             },
         ]
@@ -378,7 +378,7 @@ class KeycloakRealmCreator:
         self.log("   • testuser@example.com / password123 (user role)")
         self.log("   • admin@example.com / admin123 (admin role)")
         self.log(
-            "   • john.doe@example.com / johnpassword (user role, has transaction data)"
+            "   • john.doe@example.com / password (user role, has transaction data)"
         )
         self.log("🔗 Next steps:")
         self.log("   1. Update API config to use realm: spending-monitor")

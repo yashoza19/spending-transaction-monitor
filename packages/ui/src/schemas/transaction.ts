@@ -121,6 +121,21 @@ export const CreateTransactionSchema = z.object({
     ),
   type: z.enum(['debit', 'credit']),
   merchant: z.string().max(50, 'Merchant name must be less than 50 characters').trim(),
+  merchant_city: z
+    .string()
+    .max(50, 'City must be less than 50 characters')
+    .trim()
+    .optional(),
+  merchant_state: z
+    .string()
+    .max(50, 'State must be less than 50 characters')
+    .trim()
+    .optional(),
+  merchant_country: z
+    .string()
+    .max(50, 'Country must be less than 50 characters')
+    .trim()
+    .optional(),
   tags: z.array(z.string()),
   notes: z.string().max(500, 'Notes must be less than 500 characters').trim(),
 });
@@ -170,6 +185,14 @@ export const ApiTransactionResponseSchema = z.object({
   description: z.string(),
   user_id: z.string(),
   trans_num: z.string(),
+  // Location fields (optional)
+  merchant_city: z.string().nullable().optional(),
+  merchant_state: z.string().nullable().optional(),
+  merchant_country: z.string().nullable().optional(),
+  merchant_zipcode: z.string().nullable().optional(),
+  merchant_latitude: z.number().nullable().optional(),
+  merchant_longitude: z.number().nullable().optional(),
+  authorization_code: z.string().nullable().optional(),
 });
 
 export const ApiNotificationResponseSchema = z.object({

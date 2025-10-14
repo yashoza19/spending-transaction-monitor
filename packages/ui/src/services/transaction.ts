@@ -9,17 +9,14 @@ import {
 import { apiClient } from './apiClient';
 
 export class TransactionService {
-  private static baseUrl = '/api/transactions';
+  private static baseUrl = '/transactions';
 
   /**
    * Fetch all transactions
    */
   static async getTransactions(): Promise<Transaction[]> {
-    const response = await fetch(this.baseUrl);
-    if (!response.ok) {
-      throw new Error('Failed to fetch transactions');
-    }
-    return response.json();
+    const response = await apiClient.get<Transaction[]>(this.baseUrl);
+    return response.data;
   }
 
   /**
@@ -55,14 +52,14 @@ export class TransactionService {
         transaction_date: tx.transaction_date,
         transaction_type: tx.transaction_type as (typeof TRANSACTION_TYPES)[number],
         status: tx.status as (typeof TRANSACTION_STATUSES)[number],
-        merchant_city: undefined,
-        merchant_state: undefined,
-        merchant_country: undefined,
-        merchant_zipcode: undefined,
-        merchant_latitude: undefined,
-        merchant_longitude: undefined,
-        authorization_code: undefined,
-        trans_num: tx.trans_num,
+        merchant_city: tx.merchant_city || undefined,
+        merchant_state: tx.merchant_state || undefined,
+        merchant_country: tx.merchant_country || undefined,
+        merchant_zipcode: tx.merchant_zipcode || undefined,
+        merchant_latitude: tx.merchant_latitude || undefined,
+        merchant_longitude: tx.merchant_longitude || undefined,
+        authorization_code: tx.authorization_code || undefined,
+        trans_num: tx.trans_num || undefined,
         created_at: new Date().toISOString(), // Default since not in API response
         updated_at: new Date().toISOString(), // Default since not in API response
       }),
@@ -112,14 +109,14 @@ export class TransactionService {
       transaction_date: tx.transaction_date,
       transaction_type: tx.transaction_type as (typeof TRANSACTION_TYPES)[number],
       status: tx.status as (typeof TRANSACTION_STATUSES)[number],
-      merchant_city: undefined,
-      merchant_state: undefined,
-      merchant_country: undefined,
-      merchant_zipcode: undefined,
-      merchant_latitude: undefined,
-      merchant_longitude: undefined,
-      authorization_code: undefined,
-      trans_num: tx.trans_num,
+      merchant_city: tx.merchant_city || undefined,
+      merchant_state: tx.merchant_state || undefined,
+      merchant_country: tx.merchant_country || undefined,
+      merchant_zipcode: tx.merchant_zipcode || undefined,
+      merchant_latitude: tx.merchant_latitude || undefined,
+      merchant_longitude: tx.merchant_longitude || undefined,
+      authorization_code: tx.authorization_code || undefined,
+      trans_num: tx.trans_num || undefined,
       created_at: new Date().toISOString(), // Default since not in API response
       updated_at: new Date().toISOString(), // Default since not in API response
     };
@@ -251,9 +248,9 @@ export class TransactionService {
       transaction_type: formData.type === 'credit' ? 'REFUND' : 'PURCHASE',
       status: 'PENDING',
       // Optional fields
-      merchant_city: null,
-      merchant_state: null,
-      merchant_country: null,
+      merchant_city: formData.merchant_city || null,
+      merchant_state: formData.merchant_state || null,
+      merchant_country: formData.merchant_country || null,
       merchant_zipcode: null,
       merchant_latitude: null,
       merchant_longitude: null,
@@ -261,20 +258,8 @@ export class TransactionService {
       trans_num: null,
     };
 
-    const response = await fetch(this.baseUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(backendPayload),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to create transaction');
-    }
-
-    return response.json();
+    const response = await apiClient.post<Transaction>(this.baseUrl, backendPayload);
+    return response.data;
   }
 
   /**
@@ -284,33 +269,17 @@ export class TransactionService {
     id: string,
     transaction: Partial<CreateTransaction>,
   ): Promise<Transaction> {
-    const response = await fetch(`${this.baseUrl}/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(transaction),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to update transaction');
-    }
-
-    return response.json();
+    const response = await apiClient.put<Transaction>(
+      `${this.baseUrl}/${id}`,
+      transaction,
+    );
+    return response.data;
   }
 
   /**
    * Delete a transaction
    */
   static async deleteTransaction(id: string): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/${id}`, {
-      method: 'DELETE',
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to delete transaction');
-    }
+    await apiClient.delete(`${this.baseUrl}/${id}`);
   }
 }

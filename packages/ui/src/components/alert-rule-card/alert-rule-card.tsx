@@ -11,7 +11,6 @@ import { cn } from '../../lib/utils';
 import { statusColors } from '../../lib/colors';
 import { useAlertRuleHistory } from '../../hooks/alert';
 import {
-  Bell,
   ChevronDown,
   ChevronUp,
   Pause,
@@ -95,7 +94,6 @@ export function AlertRuleCard({
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <Bell className="h-4 w-4 text-muted-foreground" />
               <p className="font-medium text-foreground">{rule.rule}</p>
             </div>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">

@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getCurrentLocation, type UserLocation } from '@/services/geolocation';
 import { locationConfig } from '@/config/location';
 import { useAuth } from '@/hooks/useAuth';
+import { apiClient } from '@/services/apiClient';
 
 interface PeriodicLocationState {
   isActive: boolean;
@@ -40,7 +41,6 @@ export function usePeriodicLocation(): UsePeriodicLocationResult {
   // Send location to backend with retry logic
   const sendLocationToBackend = useCallback(async (location: UserLocation) => {
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
       'X-User-Latitude': location.latitude.toString(),
       'X-User-Longitude': location.longitude.toString(),
     };
@@ -49,23 +49,18 @@ export function usePeriodicLocation(): UsePeriodicLocationResult {
       headers['X-User-Location-Accuracy'] = location.accuracy.toString();
     }
 
-    const response = await fetch('/api/users/location', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
+    const response = await apiClient.post(
+      '/users/location',
+      {
         location_consent_given: true,
         last_app_location_latitude: location.latitude,
         last_app_location_longitude: location.longitude,
         last_app_location_accuracy: location.accuracy || null,
-      }),
-    });
+      },
+      { headers },
+    );
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Location update failed: ${error}`);
-    }
-
-    return response.json();
+    return response.data;
   }, []);
 
   // Update location with retry logic

@@ -230,7 +230,15 @@ function AlertsPage() {
       {/* Active Rules */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-foreground">Active Rules</h2>
+          <div className="flex items-center gap-3">
+            <Bell className="h-5 w-5 text-primary" />
+            <div>
+              <h2 className="text-xl font-semibold text-foreground">Active Rules</h2>
+              <p className="text-sm text-muted-foreground">
+                Rules currently monitoring your transactions
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Location Permission Alert - positioned under Active Rules with matching width */}
