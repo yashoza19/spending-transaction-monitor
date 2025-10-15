@@ -27,7 +27,6 @@ import {
   useDeleteAlertRule,
   useValidateAlertRule,
 } from '../../hooks/alert';
-import { useRecommendations } from '../../hooks/recommendations';
 import { cn } from '../../lib/utils';
 import { statusColors } from '../../lib/colors';
 import type { CreateAlertRuleInput } from '../../schemas/alert-rule';
@@ -38,7 +37,6 @@ export const Route = createFileRoute('/_protected/alerts')({
 
 function AlertsPage() {
   const { data: rules, isLoading } = useAlertRules();
-  const { data: recommendations } = useRecommendations();
   const createRuleFromValidation = useCreateAlertRuleFromValidation();
   const validateRule = useValidateAlertRule();
   const toggleRule = useToggleAlertRule();
@@ -55,15 +53,6 @@ function AlertsPage() {
     null,
   );
   const [pendingRule, setPendingRule] = useState<string | null>(null);
-  const [currentRecommendations, setCurrentRecommendations] = useState(recommendations);
-
-  // Update current recommendations when data changes
-  useEffect(() => {
-    setCurrentRecommendations(recommendations);
-  }, [recommendations]);
-
-  // Get current user ID from the recommendations data
-  const currentUserId = recommendations?.user_id || 'u-011';
 
   const handleValidateRule = async (data: CreateAlertRuleInput) => {
     try {
