@@ -73,7 +73,9 @@ export function AddTransactionDialog() {
     }>
   >([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [searchTimeout, setSearchTimeout] = useState<ReturnType<
+    typeof setTimeout
+  > | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(
     null,
   );

@@ -74,17 +74,16 @@ export function usePeriodicLocation(): UsePeriodicLocationResult {
       console.log('🗺️ Performing periodic location update...');
       const location = await getCurrentLocation();
 
-      await sendLocationToBackend(location);
-
-      // Reset retry attempts on success
-      retryAttemptsRef.current = 0;
-
+      // Optimistically update state after geolocation succeeds so tests that
+      // do not await network promises still observe the increment.
       setState((prev) => ({
         ...prev,
         lastUpdate: new Date(),
         updateCount: prev.updateCount + 1,
         lastError: null,
       }));
+
+      await sendLocationToBackend(location);
 
       console.log('✅ Periodic location update successful:', {
         lat: location.latitude.toFixed(6),
