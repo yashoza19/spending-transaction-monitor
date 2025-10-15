@@ -6,7 +6,6 @@ import {
   checkLocationPermission,
   type UserLocation,
 } from '../services/geolocation';
-import { apiClient } from '../services/apiClient';
 
 interface LocationState {
   location: UserLocation | null;
@@ -46,6 +45,9 @@ export function useUserLocation(
 
       try {
         console.log('📤 Sending location to backend:', loc);
+
+        // Use apiClient to automatically include Authorization header
+        const { apiClient } = await import('../services/apiClient');
 
         // Update user location consent and coordinates
         await apiClient.post(

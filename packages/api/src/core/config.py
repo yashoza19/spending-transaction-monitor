@@ -50,6 +50,17 @@ class Settings(BaseSettings):
     LLAMASTACK_BASE_URL: str = 'http://localhost:8321'
     LLAMASTACK_MODEL: str = 'meta-llama/Llama-3.2-3B-Instruct'
 
+    # Embedding settings (for category normalization)
+    EMBEDDING_PROVIDER: str = 'local'  # local (sentence-transformers), openai, llamastack, ollama (deprecated)
+    EMBEDDING_MODEL: str = (
+        'all-minilm'  # Maps to sentence-transformers/all-MiniLM-L6-v2
+    )
+    EMBEDDING_DIMENSIONS: int = 384
+    OLLAMA_BASE_URL: str = (
+        'http://localhost:11434'  # Only needed if using ollama provider
+    )
+    # Note: Using same LLAMASTACK_BASE_URL as LLM settings above
+
     # Keycloak settings
     KEYCLOAK_URL: str = 'http://localhost:8080'
     KEYCLOAK_REALM: str = 'spending-monitor'
@@ -67,13 +78,8 @@ class Settings(BaseSettings):
 
     def model_post_init(self, __context):
         """Set derived values based on environment"""
-
-        # Auto-enable auth bypass in development if not explicitly set
-        if (
-            self.ENVIRONMENT == 'development'
-            and not hasattr(self, '_bypass_auth_explicitly_set')
-            and 'BYPASS_AUTH' not in os.environ
-        ):
+        # Auto-enable auth bypass in development ONLY if not explicitly set in environment
+        if self.ENVIRONMENT == 'development' and 'BYPASS_AUTH' not in os.environ:
             self.BYPASS_AUTH = True
 
         # Set DEBUG based on environment if not explicitly set

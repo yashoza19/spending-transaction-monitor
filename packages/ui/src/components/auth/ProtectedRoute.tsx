@@ -1,6 +1,13 @@
 /**
  * Protected Route Component
- * Handles authentication checks and redirects for protected pages
+ *
+ * @deprecated For general route protection, use the _protected layout route instead.
+ * This component is maintained for specialized use cases that require additional
+ * authorization checks (e.g., admin-only routes with requireAdmin prop).
+ *
+ * For typical protected routes, prefer the declarative approach:
+ * - Place routes under `_protected/` directory
+ * - The layout route handles authentication automatically
  */
 
 import React, { useEffect } from 'react';
@@ -21,25 +28,44 @@ export function ProtectedRoute({
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!auth.isLoading) {
-      // Not authenticated - redirect to login
-      if (!auth.isAuthenticated || !auth.user) {
-        // Store current path for post-login redirect
-        const currentPath = window.location.pathname + window.location.search;
-        navigate({
-          to: '/login',
-          search: { redirect: currentPath, error: '' },
-        });
-        return;
-      }
+    if (import.meta.env.DEV) {
+      console.log('ProtectedRoute auth state:', {
+        isLoading: auth.isLoading,
+        isAuthenticated: auth.isAuthenticated,
+        user: auth.user,
+        error: auth.error,
+      });
+    }
 
-      // Authenticated but insufficient permissions
+    if (!auth.isLoading && !auth.isAuthenticated) {
+      // Not authenticated - redirect to login
+      if (import.meta.env.DEV) {
+        console.log('Redirecting to login - not authenticated');
+      }
+      // Store current path for post-login redirect
+      const currentPath = window.location.pathname + window.location.search;
+      navigate({
+        to: '/login',
+        search: { redirect: currentPath, error: '' },
+      });
+      return;
+    }
+
+    // Check admin requirement once user is loaded
+    if (!auth.isLoading && auth.isAuthenticated && auth.user) {
       if (requireAdmin && !auth.user.roles.includes('admin')) {
         navigate({ to: '/' });
         return;
       }
     }
-  }, [auth.isAuthenticated, auth.isLoading, auth.user, navigate, requireAdmin]);
+  }, [
+    auth.isAuthenticated,
+    auth.isLoading,
+    auth.user,
+    navigate,
+    requireAdmin,
+    auth.error,
+  ]);
 
   // Show loading state while checking auth
   if (auth.isLoading) {
@@ -70,8 +96,20 @@ export function ProtectedRoute({
   }
 
   // Don't render until auth is confirmed
-  if (!auth.isAuthenticated || !auth.user) {
+  if (!auth.isAuthenticated) {
     return null;
+  }
+
+  // If authenticated but user not loaded yet, show loading
+  if (!auth.user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/30">
+        <Card className="max-w-md w-full p-8 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading user data...</p>
+        </Card>
+      </div>
+    );
   }
 
   // Check admin requirement

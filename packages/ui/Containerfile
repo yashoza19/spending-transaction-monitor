@@ -19,7 +19,7 @@ WORKDIR /app/packages/ui
 # Install dependencies using workspace
 RUN pnpm install --no-frozen-lockfile
 
-# Build the application
+# Build the application with environment variables
 RUN pnpm run build:vite
 
 # Production stage - use Node.js to serve static files
@@ -33,6 +33,10 @@ RUN npm install -g serve
 # Copy built assets from builder stage
 COPY --from=builder /app/packages/ui/dist ./dist
 
+# Copy the runtime config generator script
+COPY packages/ui/generate-env-config.sh /usr/local/bin/generate-env-config.sh
+RUN chmod +x /usr/local/bin/generate-env-config.sh
+
 # Create non-root user for OpenShift compatibility
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001 -G nodejs
 
@@ -44,5 +48,5 @@ USER nodejs
 
 EXPOSE 8080
 
-# Use serve to host the SPA with proper routing
-CMD ["serve", "-s", "dist", "-l", "8080"]
+# Generate runtime config and start the server
+CMD ["sh", "-c", "generate-env-config.sh && serve -s dist -l 8080"]
