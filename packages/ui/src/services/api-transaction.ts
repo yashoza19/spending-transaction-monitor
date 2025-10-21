@@ -88,7 +88,7 @@ export const apiTransactionService = {
 
     // Sort by time descending
     transformedTransactions.sort(
-      (a, b) =>
+      (a: Transaction, b: Transaction) =>
         new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime(),
     );
 
@@ -289,14 +289,13 @@ export const realAlertService = {
     const rules = await response.json();
 
     // Transform API data to match UI schema
+    // Note: ApiAlertRuleResponse already matches AlertRule schema
     return rules.map((rule: ApiAlertRuleResponse) => ({
       id: rule.id,
-      rule: rule.name,
-      status: rule.is_active ? 'active' : 'inactive',
-      triggered: rule.trigger_count || 0,
-      last_triggered: rule.last_triggered
-        ? new Date(rule.last_triggered).toLocaleString()
-        : 'Never',
+      rule: rule.rule,
+      status: rule.status,
+      triggered: rule.triggered,
+      last_triggered: rule.last_triggered,
       created_at: rule.created_at,
     }));
   },
