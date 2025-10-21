@@ -17,7 +17,7 @@ try:
     from db.models import User
 except ImportError:
     # DB package not available during some local dev flows
-    User = None
+    User = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +37,9 @@ async def capture_user_location(
     Returns:
         True if location was captured and updated, False otherwise
     """
-    if not User:
+    if not User:  # type: ignore  # type: ignore
         logger.warning('User model not available, skipping location capture')
-        return False
+        return False  # type: ignore
 
     # Extract location headers
     latitude_header = request.headers.get('X-User-Latitude')
@@ -133,8 +133,8 @@ async def grant_location_consent(user_id: str, session: AsyncSession) -> bool:
     Returns:
         True if consent was granted successfully, False otherwise
     """
-    if not User:
-        return False
+    if not User:  # type: ignore
+        return False  # type: ignore
 
     try:
         await session.execute(
@@ -164,8 +164,8 @@ async def revoke_location_consent(user_id: str, session: AsyncSession) -> bool:
     Returns:
         True if consent was revoked successfully, False otherwise
     """
-    if not User:
-        return False
+    if not User:  # type: ignore
+        return False  # type: ignore
 
     try:
         # Clear location data and revoke consent
@@ -203,8 +203,8 @@ async def get_user_location(user_id: str, session: AsyncSession) -> dict | None:
     Returns:
         Dictionary with location data if available, None otherwise
     """
-    if not User:
-        return None
+    if not User:  # type: ignore
+        return None  # type: ignore
 
     try:
         result = await session.execute(

@@ -2,7 +2,7 @@ import os
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import declarative_base
 
 from alembic import context
 
@@ -26,7 +26,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 
-from db.models import *  # noqa: F401,F403 ensure models are imported for autogenerate
+from db.models import *  # noqa: F401,F403,E402 ensure models are imported for autogenerate
 
 # target metadata for autogenerate
 target_metadata = Base.metadata
@@ -44,9 +44,9 @@ def run_migrations_offline() -> None:
     # Convert asyncpg URLs to psycopg2 for Alembic compatibility
     if url and 'postgresql+asyncpg://' in url:
         url = url.replace('postgresql+asyncpg://', 'postgresql+psycopg2://')
-    
+
     print(f'url in env.py: {url}')
-    
+
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -62,21 +62,23 @@ def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
     # Get database URL from environment variable first, then fall back to config, then use default
     database_url = (
-        os.environ.get('DATABASE_URL') or 
-        config.get_main_option('sqlalchemy.url') or
-        'postgresql+psycopg2://user:password@localhost:5432/spending-monitor'  # Default fallback
+        os.environ.get('DATABASE_URL')
+        or config.get_main_option('sqlalchemy.url')
+        or 'postgresql+psycopg2://user:password@localhost:5432/spending-monitor'  # Default fallback
     )
-    
+
     # Convert asyncpg URLs to psycopg2 for Alembic compatibility
     if database_url and 'postgresql+asyncpg://' in database_url:
-        database_url = database_url.replace('postgresql+asyncpg://', 'postgresql+psycopg2://')
-    
+        database_url = database_url.replace(
+            'postgresql+asyncpg://', 'postgresql+psycopg2://'
+        )
+
     print(f'database_url in env.py: {database_url}')
-    
+
     # Create a copy of the config section and ensure URL is set
     configuration = config.get_section(config.config_ini_section, {})
     configuration['sqlalchemy.url'] = database_url
-    
+
     connectable = engine_from_config(
         configuration,
         prefix='sqlalchemy.',

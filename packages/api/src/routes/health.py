@@ -13,8 +13,8 @@ try:
     from db import DatabaseService, get_db_service
 except ImportError:
     # DB package not available during some local dev flows
-    DatabaseService = None
-    get_db_service = None
+    DatabaseService = None  # type: ignore
+    get_db_service = None  # type: ignore
 
 # Capture API service startup time
 API_START_TIME = datetime.now(UTC)

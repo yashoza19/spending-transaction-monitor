@@ -10,9 +10,10 @@ from typing import Any
 # Add the parent directory to sys.path to make imports work when run as script
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 
+from sqlalchemy import func, select, text
+
 from db.database import SessionLocal
 from db.models import AlertNotification, AlertRule, CreditCard, Transaction, User
-from sqlalchemy import func, select, text
 
 # Optional: Import requests for Keycloak API calls
 try:
@@ -221,13 +222,11 @@ def convert_timestamps(obj_data: dict[str, Any], fields: list[str]) -> dict[str,
     """Convert string timestamps to datetime objects"""
     obj_copy = obj_data.copy()
     for field in fields:
-        if obj_copy.get(field):
-            # Only convert if it's a string (not already a datetime object)
-            if isinstance(obj_copy[field], str):
-                # Remove Z and parse ISO format
-                timestamp_str = obj_copy[field].replace('Z', '+00:00')
-                obj_copy[field] = datetime.fromisoformat(timestamp_str)
-            # If it's already a datetime object, leave it as is
+        if obj_copy.get(field) and isinstance(obj_copy[field], str):
+            # Remove Z and parse ISO format
+            timestamp_str = obj_copy[field].replace('Z', '+00:00')
+            obj_copy[field] = datetime.fromisoformat(timestamp_str)
+        # If it's already a datetime object, leave it as is
     return obj_copy
 
 

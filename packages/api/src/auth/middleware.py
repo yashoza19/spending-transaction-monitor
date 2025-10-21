@@ -20,15 +20,15 @@ try:
     from db.models import User
 except ImportError:
     # DB package not available during some local dev flows
-    get_db = None
-    User = None
+    get_db = None  # type: ignore
+    User = None  # type: ignore
 
 # Location services import
 try:
     from ..services.location_middleware import update_user_location_on_login
 except ImportError:
     # Location services not available
-    update_user_location_on_login = None
+    update_user_location_on_login = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -132,15 +132,16 @@ class KeycloakJWTBearer:
         jwks_uri = oidc_config['jwks_uri']
 
         logger.info(f'Original JWKS URI: {jwks_uri}')
-        logger.info(
-            f'Checking if "localhost:8080" in jwks_uri: {"localhost:8080" in jwks_uri}'
-        )
 
-        # Replace localhost with keycloak for container-to-container communication
-        # (OIDC discovery returns localhost URLs for browser access, but we need container names)
-        if 'localhost:8080' in jwks_uri:
+        # Only replace localhost with keycloak when KEYCLOAK_URL uses the container hostname
+        # This allows pnpm dev (localhost) and containerized deployments (keycloak) to both work
+        if 'localhost:8080' in jwks_uri and 'keycloak' in KEYCLOAK_URL:
             jwks_uri = jwks_uri.replace('localhost:8080', 'keycloak:8080')
-            logger.info('🔄 Replaced localhost:8080 with keycloak:8080 in JWKS URI')
+            logger.info(
+                '🔄 Replaced localhost:8080 with keycloak:8080 in JWKS URI (containerized mode)'
+            )
+        else:
+            logger.info('📍 Using JWKS URI as-is (development/host mode)')
 
         logger.info(f'Fetching JWKS from: {jwks_uri}')
 

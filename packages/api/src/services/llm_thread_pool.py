@@ -63,13 +63,13 @@ class LLMThreadPool:
         results = await asyncio.gather(*futures, return_exceptions=True)
 
         # Handle exceptions
-        processed_results = []
+        processed_results: list[dict[str, Any] | None] = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 logger.error(f'Error in thread pool task {i}: {result}')
                 processed_results.append(None)
             else:
-                processed_results.append(result)
+                processed_results.append(result)  # type: ignore
 
         return processed_results
 

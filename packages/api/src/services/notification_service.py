@@ -141,7 +141,7 @@ class NotificationService:
         query = query.limit(limit).offset(offset)
 
         result = await session.execute(query)
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def mark_notification_as_read(
         self,
