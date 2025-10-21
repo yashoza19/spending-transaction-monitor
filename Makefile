@@ -246,6 +246,15 @@ help:
 	@echo "    test-alert-rules   Interactive menu to test alert rules"
 	@echo "    list-alert-samples List available sample alert rule files"
 	@echo ""
+	@echo "  Setup:"
+	@echo "    setup-data         Complete data setup (migrations + seed all)"
+	@echo ""
+	@echo "  Seeding:"
+	@echo "    seed-db            Seed database with sample data"
+	@echo "    seed-keycloak      Set up Keycloak realm (without DB user sync)"
+	@echo "    seed-keycloak-with-users  Set up Keycloak and sync DB users"
+	@echo "    seed-all           Seed both database and Keycloak with users"
+	@echo ""
 	@echo "  Utilities:"
 	@echo "    login              Login to OpenShift registry"
 	@echo "    create-project     Create OpenShift project"
@@ -580,3 +589,29 @@ build-run-local: setup-dev-env build-local
 setup-local: check-env-dev pull-local run-local
 	@echo "✅ Local development environment is fully set up and ready!"
 	@echo "Database has been migrated and seeded with test data."
+
+# Seeding targets
+.PHONY: seed-db
+seed-db:
+	@echo "🌱 Seeding database with sample data..."
+	pnpm seed:db
+
+.PHONY: seed-keycloak
+seed-keycloak:
+	@echo "🔐 Setting up Keycloak realm..."
+	pnpm seed:keycloak
+
+.PHONY: seed-keycloak-with-users
+seed-keycloak-with-users:
+	@echo "🔐 Setting up Keycloak realm and syncing database users..."
+	pnpm seed:keycloak-with-users
+
+.PHONY: seed-all
+seed-all:
+	@echo "🌱 Seeding all data (database + Keycloak)..."
+	pnpm seed:all
+
+.PHONY: setup-data
+setup-data:
+	@echo "🚀 Setting up data: Running migrations, then seeding database and Keycloak..."
+	pnpm setup:data
