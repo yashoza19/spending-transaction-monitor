@@ -10,12 +10,14 @@ export default [
   js.configs.recommended,
   {
     files: ['**/*.{ts,tsx,js,jsx}'],
+    ignores: ['**/*.config.{ts,js,mjs}', '**/vite.config.*', '**/.storybook/**/*.{ts,js}', '**/vitest.config.*'],
     languageOptions: {
       parser: tsparser,
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        ecmaFeatures: { jsx: true }
+        ecmaFeatures: { jsx: true },
+        project: './tsconfig.json',
       },
       globals: {
         // Browser globals
@@ -70,13 +72,20 @@ export default [
       'react/no-unescaped-entities': 'off',
       // Disable prop-types validation since we use TypeScript
       'react/prop-types': 'off',
+      // TypeScript specific rules
+      // Note: @typescript-eslint/no-explicit-any is already in recommended rules
+      // For implicit any (parameters without types), use tsc --noEmit in lint script
     }
   },
-  // Node.js config for build tools
+  // Node.js config for build tools (without project option)
   {
-    files: ['**/*.config.{ts,js,mjs}', '**/vite.config.*'],
+    files: ['**/*.config.{ts,js,mjs}', '**/vite.config.*', '**/.storybook/**/*.{ts,js}'],
     languageOptions: {
       parser: tsparser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
       globals: {
         __dirname: 'readonly',
         __filename: 'readonly',
@@ -84,6 +93,8 @@ export default [
         Buffer: 'readonly',
         global: 'readonly',
         React: 'readonly',
+        document: 'readonly',
+        window: 'readonly',
       }
     }
   },
