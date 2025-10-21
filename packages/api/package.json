@@ -12,6 +12,7 @@
     "lint:fix": "uv run ruff check . --fix",
     "format": "uv run ruff format . && uv run ruff check . --fix",
     "format:check": "uv run ruff format . --check && uv run ruff check .",
-    "type-check": "uv run mypy src/"
+    "type-check": "uv run mypy src/",
+    "check": "pnpm format:check && pnpm lint && pnpm type-check"
   }
 }

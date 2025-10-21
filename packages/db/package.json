@@ -39,6 +39,12 @@
     "test": "uv run pytest",
     "test:e2e": "cd src/db/scripts && ./test_alert_rules.sh",
     "test:e2e:list": "cd src/db/scripts && ./test_alert_rules.sh --list",
-    "test:e2e:help": "cd src/db/scripts && ./test_alert_rules.sh --help"
+    "test:e2e:help": "cd src/db/scripts && ./test_alert_rules.sh --help",
+    "lint": "uv run ruff check .",
+    "lint:fix": "uv run ruff check . --fix",
+    "format": "uv run ruff format . && uv run ruff check . --fix",
+    "format:check": "uv run ruff format . --check && uv run ruff check .",
+    "type-check": "MYPYPATH=src uv run mypy --package db",
+    "check": "pnpm format:check && pnpm lint && pnpm type-check"
   }
 }
