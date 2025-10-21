@@ -7,7 +7,6 @@ No external services required - fully self-contained.
 
 import asyncio
 import sys
-from typing import List
 
 from sentence_transformers import SentenceTransformer
 from sqlalchemy import delete, select, text
@@ -50,7 +49,7 @@ def load_model() -> SentenceTransformer:
         sys.exit(1)
 
 
-def generate_embedding(model: SentenceTransformer, text: str) -> List[float]:
+def generate_embedding(model: SentenceTransformer, text: str) -> list[float]:
     """Generate embedding using sentence-transformers"""
     try:
         # encode returns numpy array, convert to list
@@ -84,7 +83,9 @@ async def update_database_schema(session: AsyncSession) -> None:
     try:
         # Drop and recreate the column with correct dimensions
         await session.execute(
-            text('ALTER TABLE merchant_category_embeddings DROP COLUMN IF EXISTS embedding')
+            text(
+                'ALTER TABLE merchant_category_embeddings DROP COLUMN IF EXISTS embedding'
+            )
         )
         await session.execute(
             text(
@@ -257,4 +258,3 @@ if __name__ == '__main__':
     exit_code = asyncio.run(main())
     if exit_code:
         sys.exit(exit_code)
-

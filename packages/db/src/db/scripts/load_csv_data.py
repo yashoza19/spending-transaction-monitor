@@ -6,11 +6,11 @@ import csv
 import os
 from datetime import datetime
 from decimal import Decimal
-from typing import Dict, Any
+
+from sqlalchemy import delete, text
 
 from db.database import SessionLocal
-from db.models import AlertNotification, Transaction, User, AlertRule, CreditCard
-from sqlalchemy import select, delete, text
+from db.models import AlertNotification, AlertRule, CreditCard, Transaction, User
 
 
 async def parse_datetime(date_str: str) -> datetime:
@@ -105,7 +105,7 @@ async def clear_existing_data(session) -> None:
         raise
 
 
-async def load_users_from_csv(session, csv_path: str) -> Dict[str, str]:
+async def load_users_from_csv(session, csv_path: str) -> dict[str, str]:
     """Load users from CSV file and return mapping of old_id -> new_user_id"""
     print(f'Loading users from {csv_path}')
 
@@ -120,7 +120,7 @@ async def load_users_from_csv(session, csv_path: str) -> Dict[str, str]:
         users_data = []
         latest_user_date = None
 
-        with open(csv_path, 'r', encoding='utf-8') as file:
+        with open(csv_path, encoding='utf-8') as file:
             reader = csv.DictReader(file)
 
             for row in reader:
@@ -209,7 +209,7 @@ async def load_users_from_csv(session, csv_path: str) -> Dict[str, str]:
 
 
 async def load_transactions_from_csv(
-    session, csv_path: str, user_id_mapping: Dict[str, str]
+    session, csv_path: str, user_id_mapping: dict[str, str]
 ) -> None:
     """Load transactions from CSV file with adjusted timestamps"""
     print(f'Loading transactions from {csv_path}')
@@ -224,7 +224,7 @@ async def load_transactions_from_csv(
         transactions_data = []
         latest_transaction_date = None
 
-        with open(csv_path, 'r', encoding='utf-8') as file:
+        with open(csv_path, encoding='utf-8') as file:
             reader = csv.DictReader(file)
 
             for row in reader:
@@ -337,7 +337,7 @@ async def load_transactions_from_csv(
 
         # Show some example adjusted dates for verification
         if transactions_data and time_offset:
-            print(f'📊 Timestamp Adjustment Summary:')
+            print('📊 Timestamp Adjustment Summary:')
             print(f'   • Original latest transaction: {latest_transaction_date}')
             print(f'   • Adjusted to current time: {current_time}')
             print(f'   • Time shift applied: {time_offset}')
