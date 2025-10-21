@@ -22,20 +22,28 @@ dependencies = [
     "httpx>=0.28.1",
     "sentence-transformers>=2.2.0",
     "torch>=2.0.0",
+    "pyyaml>=6.0.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.4.0",
     "pytest-asyncio>=0.21.0",
+    "ruff>=0.1.0",
+    "mypy>=1.7.0",
 ]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/db"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"src/db/py.typed" = "db/py.typed"
+
 [tool.ruff]
 target-version = "py311"
 line-length = 88
+
+[tool.ruff.lint]
 select = ["E", "F", "UP", "B", "SIM", "I"]
 ignore = ["E501", "B008", "UP007"]
 
@@ -49,6 +57,12 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 markers = [
     "asyncio: marks tests as requiring asyncio (deselect with '-m \"not asyncio\"')",
+]
+
+[dependency-groups]
+dev = [
+    "types-pyyaml>=6.0.12.20250915",
+    "types-requests>=2.32.4.20250913",
 ]
 
 [tool.hatch.version]

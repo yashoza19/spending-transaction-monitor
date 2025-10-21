@@ -100,6 +100,8 @@ dev = [
     "pytest-mock>=3.15.0",
     "respx>=0.22.0",
     "ruff>=0.12.11",
+    "types-python-jose>=3.5.0.20250531",
+    "types-requests>=2.32.4.20250913",
 ]
 
 [tool.ruff.lint.isort]
