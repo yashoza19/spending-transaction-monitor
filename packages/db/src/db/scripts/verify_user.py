@@ -2,10 +2,11 @@
 
 import asyncio
 
-from db.database import SessionLocal
-from db.models import User
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
+
+from db.database import SessionLocal
+from db.models import User
 
 
 async def verify() -> None:

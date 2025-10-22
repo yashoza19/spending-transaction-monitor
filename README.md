@@ -215,6 +215,25 @@ make logs-local     # View service logs
 make reset-local    # Reset with fresh data
 ```
 
+**Setting Up Data:**
+
+After starting services, set up the database and Keycloak:
+
+```bash
+pnpm setup:data       # Complete setup: Start DB + migrations + seed all data
+pnpm seed:all         # Just seed data (DB + Keycloak) - migrations already run
+pnpm seed:db          # Seed only database
+pnpm seed:keycloak    # Setup only Keycloak realm
+
+# Or using make
+make setup-data       # Complete data setup: Start DB + migrations + all data
+make seed-all         # Seed both DB and Keycloak
+```
+
+**Note:** `pnpm setup:data` now automatically starts the database, so you don't need to run `pnpm db:start` separately.
+
+📖 **See [SEEDING.md](SEEDING.md) for complete seeding documentation**
+
 ### 🔐 Authentication Modes
 
 The application supports two authentication modes:

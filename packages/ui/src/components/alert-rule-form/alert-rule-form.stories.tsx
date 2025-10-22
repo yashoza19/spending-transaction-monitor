@@ -40,11 +40,6 @@ export const Loading: Story = {
 
 export const CustomExamples: Story = {
   args: {
-    exampleRules: [
-      'Alert when spending exceeds $10,000 in one day',
-      'Notify me of transactions over $5,000 outside business hours',
-      'Alert for more than 10 transactions in 1 hour',
-    ],
     onSubmit: (data) => {
       console.log('Form submitted:', data);
       alert(`Custom rule: ${data.rule}`);

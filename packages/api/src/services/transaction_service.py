@@ -33,7 +33,7 @@ class TransactionService:
         query = query.offset(offset).limit(limit)
 
         result = await session.execute(query)
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def get_transactions_with_filters(
         self,
@@ -76,7 +76,7 @@ class TransactionService:
         query = query.offset(offset).limit(limit)
 
         result = await session.execute(query)
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def get_transaction_by_id(
         self, transaction_id: str, session: AsyncSession

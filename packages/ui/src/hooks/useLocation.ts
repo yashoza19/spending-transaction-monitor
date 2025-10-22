@@ -57,14 +57,12 @@ export function useLocation(): UseLocationResult {
     setIsLoading(true);
     setError(null);
 
-    // eslint-disable-next-line no-undef
     const options: PositionOptions = {
       enableHighAccuracy: true,
       timeout: LOCATION_TIMEOUT,
       maximumAge: LOCATION_MAX_AGE,
     };
 
-    // eslint-disable-next-line no-undef
     const handleSuccess = (position: GeolocationPosition) => {
       const locationData: LocationData = {
         latitude: position.coords.latitude,
@@ -86,7 +84,6 @@ export function useLocation(): UseLocationResult {
       }
     };
 
-    // eslint-disable-next-line no-undef
     const handleError = (err: GeolocationPositionError) => {
       let message: string;
 

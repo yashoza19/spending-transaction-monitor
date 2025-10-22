@@ -56,40 +56,54 @@ else
   done
 fi
 
-# Run quick checks only for changed packages before pushing
+# Run comprehensive checks for changed packages before pushing
+# This includes: format-check + lint + type-check + tests
 
 # Determine changed files since BASE computed above
 CHANGED_FILES=$(git diff --name-only "$BASE"..HEAD)
 
-echo "Running pre-push checks for changed packages..."
+echo "Running comprehensive pre-push checks for changed packages..."
+echo "Checks: format → lint → type-check → tests"
+echo ""
 
 STATUS=0
 
 # UI package checks
 if echo "$CHANGED_FILES" | grep -Eq '^packages/ui/'; then
-  echo "• Detected changes in packages/ui → running UI checks"
-  (cd packages/ui && pnpm prettier --check .) || STATUS=$?
-  (cd packages/ui && pnpm eslint . --ext ts,tsx --max-warnings 0) || STATUS=$?
+  echo "• Detected changes in packages/ui → running comprehensive checks"
+  (cd packages/ui && pnpm check) || STATUS=$?
   (cd packages/ui && pnpm test) || STATUS=$?
 fi
 
 # API package checks
 if echo "$CHANGED_FILES" | grep -Eq '^packages/api/'; then
-  echo "• Detected changes in packages/api → running API checks"
-  (cd packages/api && pnpm run format:check) || STATUS=$?
-  (cd packages/api && pnpm run lint) || STATUS=$?
-  (cd packages/api && pnpm run test) || STATUS=$?
+  echo "• Detected changes in packages/api → running comprehensive checks"
+  (cd packages/api && pnpm check) || STATUS=$?
+  (cd packages/api && pnpm test) || STATUS=$?
 fi
 
-# DB package checks (tests only for now)
+# DB package checks
 if echo "$CHANGED_FILES" | grep -Eq '^packages/db/'; then
-  echo "• Detected changes in packages/db → running DB tests"
-  (cd packages/db && pnpm run test) || STATUS=$?
+  echo "• Detected changes in packages/db → running comprehensive checks"
+  (cd packages/db && pnpm check) || STATUS=$?
+  (cd packages/db && pnpm test) || STATUS=$?
+fi
+
+# Auth package checks
+if echo "$CHANGED_FILES" | grep -Eq '^packages/auth/'; then
+  echo "• Detected changes in packages/auth → running comprehensive checks"
+  (cd packages/auth && pnpm check) || STATUS=$?
+  (cd packages/auth && pnpm test) || STATUS=$?
 fi
 
 if [ $STATUS -ne 0 ]; then
-  echo "Pre-push checks failed. See output above."
+  echo ""
+  echo "❌ Pre-push checks failed. Please fix the errors above."
+  echo "💡 Tip: Run 'pnpm check' to see all issues, or 'pnpm format && pnpm lint:fix' to auto-fix."
   exit $STATUS
 fi
+
+echo ""
+echo "✅ All pre-push checks passed!"
 
 

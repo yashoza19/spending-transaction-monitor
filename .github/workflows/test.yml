@@ -37,12 +37,16 @@ jobs:
       run: pnpm install
 
     - name: Install API Python dependencies
-      run: uv sync --extra dev
+      run: uv sync --group dev
       working-directory: packages/api
 
     - name: Install DB Python dependencies
-      run: uv sync --extra dev
+      run: uv sync --group dev
       working-directory: packages/db
+
+    - name: Install Auth Python dependencies
+      run: uv sync --group dev
+      working-directory: packages/auth
 
     - name: Run linting
       run: pnpm lint

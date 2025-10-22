@@ -1,0 +1,101 @@
+# Test users for seeding both Keycloak and the database
+# This ensures authentication and data stay in sync
+# All fields are used for database seeding; Keycloak only uses username, email, password, first_name, last_name, roles
+
+- username: johndoe
+  email: johndoe@example.com
+  password: johnpassword
+  first_name: John
+  last_name: Doe
+  phone_number: '+1-555-0123'
+  address_street: '123 Main Street, Apt 4B'
+  address_city: 'San Francisco'
+  address_state: 'CA'
+  address_zipcode: '94102'
+  address_country: 'US'
+  credit_limit: 15000.00
+  credit_balance: 2347.85
+  location_consent_given: true
+  last_app_location_latitude: 37.7749
+  last_app_location_longitude: -122.4194
+  last_app_location_timestamp: '2024-01-17T18:30:00+00:00'
+  last_app_location_accuracy: 5.0
+  last_transaction_latitude: 37.7849
+  last_transaction_longitude: -122.4094
+  last_transaction_timestamp: '2024-01-17T19:20:00+00:00'
+  last_transaction_city: 'San Francisco'
+  last_transaction_state: 'CA'
+  last_transaction_country: 'US'
+  card_number: '1234'
+  card_type: 'Visa'
+  bank_name: 'Example Bank'
+  card_expiry_month: 12
+  card_expiry_year: 2027
+  roles:
+    - user
+
+- username: testuser
+  email: testuser@example.com
+  password: password123
+  first_name: Test
+  last_name: User
+  phone_number: '+1-555-0456'
+  address_street: '456 Oak Avenue, Suite 200'
+  address_city: 'New York'
+  address_state: 'NY'
+  address_zipcode: '10001'
+  address_country: 'US'
+  credit_limit: 10000.00
+  credit_balance: 1250.50
+  location_consent_given: true
+  last_app_location_latitude: 40.7128
+  last_app_location_longitude: -74.0060
+  last_app_location_timestamp: '2024-01-17T14:00:00+00:00'
+  last_app_location_accuracy: 10.0
+  last_transaction_latitude: 40.7228
+  last_transaction_longitude: -73.9960
+  last_transaction_timestamp: '2024-01-17T15:30:00+00:00'
+  last_transaction_city: 'New York'
+  last_transaction_state: 'NY'
+  last_transaction_country: 'US'
+  card_number: '5678'
+  card_type: 'Mastercard'
+  bank_name: 'Example Bank'
+  card_expiry_month: 6
+  card_expiry_year: 2026
+  roles:
+    - user
+
+- username: adminuser
+  email: admin@example.com
+  password: admin123
+  first_name: Admin
+  last_name: User
+  phone_number: '+1-555-0789'
+  address_street: '789 Pine Street, Floor 3'
+  address_city: 'Seattle'
+  address_state: 'WA'
+  address_zipcode: '98101'
+  address_country: 'US'
+  credit_limit: 20000.00
+  credit_balance: 500.00
+  location_consent_given: true
+  last_app_location_latitude: 47.6062
+  last_app_location_longitude: -122.3321
+  last_app_location_timestamp: '2024-01-17T12:00:00+00:00'
+  last_app_location_accuracy: 8.0
+  last_transaction_latitude: 47.6162
+  last_transaction_longitude: -122.3221
+  last_transaction_timestamp: '2024-01-17T13:15:00+00:00'
+  last_transaction_city: 'Seattle'
+  last_transaction_state: 'WA'
+  last_transaction_country: 'US'
+  card_number: '9012'
+  card_type: 'Amex'
+  bank_name: 'Example Bank'
+  card_expiry_month: 3
+  card_expiry_year: 2028
+  roles:
+    - user
+    - admin
+

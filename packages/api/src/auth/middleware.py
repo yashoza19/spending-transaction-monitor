@@ -20,15 +20,15 @@ try:
     from db.models import User
 except ImportError:
     # DB package not available during some local dev flows
-    get_db = None
-    User = None
+    get_db = None  # type: ignore
+    User = None  # type: ignore
 
 # Location services import
 try:
     from ..services.location_middleware import update_user_location_on_login
 except ImportError:
     # Location services not available
-    update_user_location_on_login = None
+    update_user_location_on_login = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -132,15 +132,16 @@ class KeycloakJWTBearer:
         jwks_uri = oidc_config['jwks_uri']
 
         logger.info(f'Original JWKS URI: {jwks_uri}')
-        logger.info(
-            f'Checking if "localhost:8080" in jwks_uri: {"localhost:8080" in jwks_uri}'
-        )
 
-        # Replace localhost with keycloak for container-to-container communication
-        # (OIDC discovery returns localhost URLs for browser access, but we need container names)
-        if 'localhost:8080' in jwks_uri:
+        # Only replace localhost with keycloak when KEYCLOAK_URL uses the container hostname
+        # This allows pnpm dev (localhost) and containerized deployments (keycloak) to both work
+        if 'localhost:8080' in jwks_uri and 'keycloak' in KEYCLOAK_URL:
             jwks_uri = jwks_uri.replace('localhost:8080', 'keycloak:8080')
-            logger.info('🔄 Replaced localhost:8080 with keycloak:8080 in JWKS URI')
+            logger.info(
+                '🔄 Replaced localhost:8080 with keycloak:8080 in JWKS URI (containerized mode)'
+            )
+        else:
+            logger.info('📍 Using JWKS URI as-is (development/host mode)')
 
         logger.info(f'Fetching JWKS from: {jwks_uri}')
 
@@ -203,6 +204,7 @@ class KeycloakJWTBearer:
             logger.info(f'   Subject: {claims.get("sub", "N/A")}')
             logger.info(f'   Username: {claims.get("preferred_username", "N/A")}')
             logger.info(f'   Email: {claims.get("email", "N/A")}')
+            logger.info(f'   All claims keys: {list(claims.keys())}')
 
             return claims
 
@@ -331,6 +333,10 @@ async def get_current_user(
 ) -> dict | None:
     """Extract user info from JWT token with development bypass (returns None if no token)"""
 
+    logger.info(
+        f'📋 get_current_user called - Credentials: {"Present" if credentials else "None"}, BYPASS_AUTH: {settings.BYPASS_AUTH}'
+    )
+
     # Development bypass - check for test user header first
     if settings.BYPASS_AUTH:
         logger.info('🔓 Authentication bypassed - development mode enabled')
@@ -345,6 +351,7 @@ async def get_current_user(
         return await get_dev_fallback_user(session)
 
     if not credentials:
+        logger.warning('⚠️  get_current_user: No credentials provided, returning None')
         return None
 
     claims = await keycloak_jwt.validate_token(credentials.credentials)
@@ -354,6 +361,10 @@ async def get_current_user(
     keycloak_id = claims.get('sub')
     user_email = claims.get('email')
     user_id = keycloak_id  # Default fallback
+
+    logger.info(
+        f'🔍 User lookup debug - Keycloak ID: {keycloak_id}, Email: {user_email}'
+    )
 
     if session and User and keycloak_id:
         try:
@@ -415,6 +426,19 @@ async def require_authentication(
 ) -> dict:
     """Require valid JWT token with development bypass"""
 
+    # Enhanced logging for debugging
+    if request:
+        logger.info(
+            f'🔐 require_authentication called: {request.method} {request.url.path}'
+        )
+        auth_header = request.headers.get('authorization', 'NOT PRESENT')
+        logger.info(
+            f'   Authorization header: {auth_header[:50] if auth_header != "NOT PRESENT" else auth_header}...'
+        )
+        logger.info(f'   Credentials object: {"Present" if credentials else "None"}')
+    else:
+        logger.info('🔐 require_authentication called (no request object)')
+
     # Development bypass - check for test user header first
     if settings.BYPASS_AUTH:
         logger.info('🔓 Authentication bypassed - development mode enabled')
@@ -431,15 +455,26 @@ async def require_authentication(
         return await get_dev_fallback_user(session)
 
     if not credentials:
+        logger.error('❌ No credentials provided - returning 401')
+        if request:
+            logger.error(f'   Request method: {request.method}')
+            logger.error(f'   Request path: {request.url.path}')
+            logger.error(f'   All headers: {dict(request.headers)}')
         raise HTTPException(
             status_code=401,
             detail='Authentication required',
             headers={'WWW-Authenticate': 'Bearer'},
         )
 
+    logger.info('✅ Credentials present, validating user...')
     user = await get_current_user(credentials, session, request)
     if not user:
+        logger.error('❌ get_current_user returned None - returning 401')
         raise HTTPException(status_code=401, detail='Invalid authentication')
+
+    logger.info(
+        f'✅ Authentication successful for user: {user.get("email", "unknown")} (ID: {user.get("id", "unknown")})'
+    )
 
     # Capture user location on successful authentication
     if request and session:

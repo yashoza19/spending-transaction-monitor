@@ -7,7 +7,6 @@ Create Date: 2025-09-15 10:00:00.000000
 """
 
 from alembic import op
-import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'e35d4db01ac2'
@@ -18,7 +17,7 @@ depends_on = None
 
 def upgrade() -> None:
     """Add PostgreSQL function for calculating distance between two points using Haversine formula"""
-    
+
     # Create the distance calculation function
     op.execute("""
         CREATE OR REPLACE FUNCTION haversine_distance_km(
@@ -56,7 +55,7 @@ def upgrade() -> None:
         END;
         $$ LANGUAGE plpgsql IMMUTABLE;
     """)
-    
+
     # Create a helper view for location-based transaction analysis
     op.execute("""
         CREATE OR REPLACE VIEW transaction_location_analysis AS
@@ -119,5 +118,7 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Remove the distance function and helper view"""
-    op.execute("DROP VIEW IF EXISTS transaction_location_analysis;")
-    op.execute("DROP FUNCTION IF EXISTS haversine_distance_km(DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION);")
+    op.execute('DROP VIEW IF EXISTS transaction_location_analysis;')
+    op.execute(
+        'DROP FUNCTION IF EXISTS haversine_distance_km(DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION);'
+    )

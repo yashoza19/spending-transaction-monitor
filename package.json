@@ -7,40 +7,28 @@
     "packages/*"
   ],
   "scripts": {
-    "setup": "pnpm install && pnpm -r --if-present install:deps",
+    "setup": "pnpm setup:deps",
+    "setup:deps": "pnpm install && pnpm -r --if-present install:deps",
+    "setup:data": "echo '🚀 Setting up data: Starting DB + migrations + sample data + Keycloak' && pnpm db:start && sleep 5 && pnpm db:upgrade && pnpm seed:all",
     "build": "turbo build",
     "dev": "turbo dev",
-    "start": "pnpm backend:setup && concurrently \"pnpm backend:start\" \"pnpm --filter @*/ui dev\"",
-    "start:dev": "BYPASS_AUTH=true pnpm backend:setup && concurrently \"pnpm backend:start\" \"pnpm --filter @*/ui dev\"",
-    "start:prod": "BYPASS_AUTH=false pnpm backend:setup && pnpm auth:start-and-setup && concurrently \"pnpm backend:start:prod\" \"pnpm --filter @*/ui dev\"",
-    "dev:full": "pnpm backend:setup && turbo dev",
-    "dev:backend": "pnpm backend:setup && pnpm backend:start",
-    "dev:containers": "make run-local",
-    "dev:containers:auth": "make build-run-local",
-    "dev:containers:noauth": "make build-run-local-noauth",
-    "backend:setup": "pnpm db:start && sleep 3 && pnpm db:upgrade && pnpm db:seed",
-    "backend:start": "ENVIRONMENT=development BYPASS_AUTH=true API_PORT=8002 pnpm --filter @*/api dev",
-    "backend:start:prod": "ENVIRONMENT=staging BYPASS_AUTH=false API_PORT=8002 pnpm --filter @*/api dev",
-    "backend:stop": "pnpm db:stop",
     "db:start": "pnpm --filter @*/db run db:start",
     "db:stop": "pnpm --filter @*/db run db:stop",
     "db:upgrade": "pnpm --filter @*/db run upgrade",
     "db:revision": "pnpm --filter @*/db run revision",
     "db:seed": "pnpm --filter @*/db seed",
     "db:verify": "pnpm --filter @*/db verify",
-    "auth:start": "pnpm --filter @spending-monitor/auth start",
-    "auth:start-and-setup": "pnpm --filter @spending-monitor/auth start-and-setup",
-    "auth:stop": "pnpm --filter @spending-monitor/auth stop",
-    "auth:logs": "pnpm --filter @spending-monitor/auth logs",
-    "auth:setup-keycloak": "pnpm --filter @spending-monitor/auth setup-keycloak",
-    "auth:setup-keycloak-with-users": "pnpm --filter @spending-monitor/auth setup-keycloak-with-users",
-    "auth:test": "pnpm --filter @spending-monitor/auth test",
+    "seed:db": "pnpm --filter @*/db seed",
+    "seed:keycloak": "pnpm --filter @*/auth setup-keycloak",
+    "seed:keycloak-with-users": "pnpm --filter @*/auth setup-keycloak-with-users",
+    "seed:all": "pnpm db:seed && pnpm seed:keycloak-with-users",
     "lint": "turbo lint",
     "lint:fix": "turbo lint:fix",
+    "type-check": "turbo type-check",
+    "check": "turbo check",
     "format": "turbo format",
     "format:check": "turbo format:check",
     "test": "turbo test",
-    "type-check": "turbo type-check",
     "storybook": "turbo storybook",
     "build-storybook": "turbo build-storybook",
     "status": "scripts/status-check.sh",
@@ -50,7 +38,7 @@
   "devDependencies": {
     "@commitlint/cli": "^19.4.0",
     "@commitlint/config-conventional": "^19.4.0",
-    "concurrently": "^9.2.0",
+    "dotenv-cli": "^10.0.0",
     "husky": "^9.1.6",
     "lint-staged": "^16.1.5",
     "semantic-release": "^24.2.7",
@@ -64,6 +52,14 @@
     "packages/api/**/*.py": [
       "cd packages/api && uv run ruff format -- --respect-gitignore",
       "cd packages/api && uv run ruff check --"
+    ],
+    "packages/db/**/*.py": [
+      "cd packages/db && uv run ruff format -- --respect-gitignore",
+      "cd packages/db && uv run ruff check --"
+    ],
+    "packages/auth/**/*.py": [
+      "cd packages/auth && uv run ruff format -- --respect-gitignore",
+      "cd packages/auth && uv run ruff check --"
     ]
   },
   "packageManager": "pnpm@9.0.0"
