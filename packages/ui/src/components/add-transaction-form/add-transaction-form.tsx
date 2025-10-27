@@ -402,7 +402,7 @@ export function AddTransactionDialog() {
                   <Label htmlFor={field.name}>Category *</Label>
                   <Select
                     value={field.state.value}
-                    onValueChange={(value) => field.handleChange(value)}
+                    onValueChange={(value: string) => field.handleChange(value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
@@ -436,7 +436,7 @@ export function AddTransactionDialog() {
                   <Label htmlFor={field.name}>Account *</Label>
                   <Select
                     value={field.state.value}
-                    onValueChange={(value) => field.handleChange(value)}
+                    onValueChange={(value: string) => field.handleChange(value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select account" />
