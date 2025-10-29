@@ -1,8 +1,13 @@
 # Containerfile
-FROM python:3.12-alpine
+FROM python:3.12-slim
 
 # Install deps
-RUN apk add --no-cache gcc musl-dev libpq-dev postgresql-client bash
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    postgresql-client \
+    bash \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy db package
 WORKDIR /app
