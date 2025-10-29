@@ -524,10 +524,6 @@ stop-local:
 build-local:
 	@echo "Building local Podman images with 'local' tag..."
 	podman-compose -f podman-compose.yml -f podman-compose.build.yml build
-	@echo "Tagging built images as 'local'..."
-	podman tag $(UI_IMAGE) $(UI_IMAGE_LOCAL) || true
-	podman tag $(API_IMAGE) $(API_IMAGE_LOCAL) || true
-	podman tag $(DB_IMAGE) $(DB_IMAGE_LOCAL) || true
 	@echo "✅ Local images built and tagged successfully"
 
 .PHONY: pull-local
