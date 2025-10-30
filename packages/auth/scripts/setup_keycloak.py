@@ -3,6 +3,7 @@
 Create a new Keycloak realm for spending-monitor with OIDC discovery enabled
 """
 
+import os
 import time
 from pathlib import Path
 
@@ -12,7 +13,7 @@ import yaml
 
 class KeycloakRealmCreator:
     def __init__(self):
-        self.base_url = 'http://localhost:8080'
+        self.base_url = os.getenv('KEYCLOAK_URL', 'http://localhost:8080')
         self.admin_username = 'admin'
         self.admin_password = 'admin'
         self.master_realm = 'master'
@@ -351,9 +352,7 @@ class KeycloakRealmCreator:
             return False
 
         # Step 5: Load test users from shared data file
-        test_users_file = (
-            Path(__file__).parent.parent.parent.parent / 'data' / 'test_users.yaml'
-        )
+        test_users_file = Path(__file__).parent.parent / 'data' / 'test_users.yaml'
 
         try:
             with open(test_users_file) as f:

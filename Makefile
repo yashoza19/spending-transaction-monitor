@@ -524,10 +524,6 @@ stop-local:
 build-local:
 	@echo "Building local Podman images with 'local' tag..."
 	podman-compose -f podman-compose.yml -f podman-compose.build.yml build
-	@echo "Tagging built images as 'local'..."
-	podman tag $(UI_IMAGE) $(UI_IMAGE_LOCAL) || true
-	podman tag $(API_IMAGE) $(API_IMAGE_LOCAL) || true
-	podman tag $(DB_IMAGE) $(DB_IMAGE_LOCAL) || true
 	@echo "✅ Local images built and tagged successfully"
 
 .PHONY: pull-local
@@ -570,7 +566,7 @@ build-run-local: setup-dev-env build-local
 	@echo "  - SMTP Web UI: http://localhost:3002"
 	@echo "  - Database: localhost:5432"
 	@echo ""
-	IMAGE_TAG=local podman-compose -f podman-compose.yml up -d
+	IMAGE_TAG=local podman-compose -f podman-compose.yml -f podman-compose.build.yml up -d
 	@echo ""
 	@echo "Waiting for database to be ready..."
 	@sleep 15
@@ -579,7 +575,7 @@ build-run-local: setup-dev-env build-local
 	@echo "✅ All services started and database is ready!"
 	@echo ""
 	@echo "To also start pgAdmin for database management, run:"
-	@echo "  IMAGE_TAG=local podman-compose -f podman-compose.yml --profile tools up -d pgadmin"
+	@echo "  IMAGE_TAG=local podman-compose -f podman-compose.yml -f podman-compose.build.yml --profile tools up -d pgadmin"
 	@echo "  Then access pgAdmin at: http://localhost:8080"
 	@echo ""
 	@echo "To view logs: make logs-local"
